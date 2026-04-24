@@ -1,4 +1,3 @@
-    <!-- BACKEND SCRIPT MODULE -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -177,10 +176,6 @@
                     </div>
                     <div id="login-error" class="hidden text-red-500 text-sm font-bold bg-red-900/30 p-2 rounded border border-red-900">Invalid credentials. Try again.</div>
                     <button type="submit" class="w-full bg-efootball-blue hover:bg-blue-400 text-white font-bold py-3 px-4 rounded-lg transition-colors">Secure Login</button>
-                    <div class="text-xs text-gray-500 mt-4 text-center bg-gray-900/50 p-3 rounded">
-                        Admin: <b>admin, admin1, admin2 / admin@123</b><br>
-                        Clubs: <b>[club_id] / [club_id]@123</b>
-                    </div>
                 </form>
             </div>
         </section>
@@ -988,9 +983,12 @@
         let isProcessingTrade = false;
         let isOnline = false;
         
-        // Use a conditional to prevent failing in Canvas environment
-       // Replace the URL below with your actual Render URL, but make sure to keep the "/api/state" at the end!
-        const API_URL = 'https://your-app-name.onrender.com/api/state';
+        // ⚠️ PASTE YOUR LIVE RENDER URL HERE (Keep the quotes! No trailing slash at the end):
+        // Example: const LIVE_BACKEND_URL = 'https://my-league-backend.onrender.com';
+        const LIVE_BACKEND_URL = ''; 
+        
+        const isLocalEnv = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:';
+        const API_URL = isLocalEnv ? 'http://localhost:3000/api/state' : (LIVE_BACKEND_URL ? `${LIVE_BACKEND_URL}/api/state` : null);
 
         let adminSort = { by: 'default', asc: true };
         let adminFilterPos = 'ALL';
@@ -1063,8 +1061,8 @@
         async function initMultiplayer() {
             try {
                 if (!API_URL) {
-                    console.log("Canvas environment detected. Local backend is unreachable.");
-                    throw new Error("Canvas environment");
+                    console.log("Canvas environment detected. No Live URL provided. Running local memory mode.");
+                    throw new Error("No API URL");
                 }
                 const res = await fetch(API_URL);
                 const serverData = await res.json();
@@ -1086,7 +1084,7 @@
                 document.getElementById('mobile-connection-status').classList.replace('bg-red-500', 'bg-green-500');
                 reRenderActiveViews();
 
-                // Setup HTTP Polling for Real-time Sync
+                // Setup HTTP Polling for Real-time Sync (Only runs if API_URL is valid)
                 setInterval(async () => {
                     if (isProcessingBid || isProcessingTrade) return;
                     try {
@@ -1111,7 +1109,7 @@
                 }, 2000); // 2-second interval polling
 
             } catch(e) {
-                console.warn("Backend offline or unreachable. Running local memory mode.");
+                console.warn("Backend offline or no URL provided. Running local memory mode.");
                 isOnline = false;
                 reRenderActiveViews();
             }
@@ -2493,215 +2491,4 @@
             if (isProcessingBid) return;
             if (!appData.activePlayerId || currentUser?.role !== 'club') return;
             
-            const localP = appData.players.find(x => x.id === appData.activePlayerId);
-            if (!localP || localP.status !== 'ACTIVE') return window.showToast("Player no longer active!", "error");
-            
-            const intendedBid = isIncrement ? localP.currentBid + amount : amount;
-            if (intendedBid <= localP.currentBid) return window.showToast("Bid must be strictly higher than current bid!", "error");
-            if ((Math.round(intendedBid * 10)) % 5 !== 0) return window.showToast("Bid amount must be a multiple of 0.5 🪙!", "error");
-            
-            const myClub = appData.clubs[currentUser.id];
-            if (intendedBid > myClub.purse) return window.showToast("Insufficient funds!", "error");
-            if (myClub.slots >= myClub.maxSlots) return window.showToast("Squad full!", "error");
-
-            isProcessingBid = true; 
-            
-            localP.currentBid = intendedBid;
-            localP.highestBidder = currentUser.id;
-            reRenderActiveViews();
-
-            try {
-                await safeUpdate(data => {
-                    const p = data.players.find(x => x.id === data.activePlayerId);
-                    if (!p || p.status !== 'ACTIVE') throw "Player no longer active!";
-                    
-                    const newServerBid = isIncrement ? p.currentBid + amount : amount;
-                    
-                    if (newServerBid <= p.currentBid) throw "A higher bid was already placed!";
-                    if ((Math.round(newServerBid * 10)) % 5 !== 0) throw "Bid amount must be a multiple of 0.5 🪙!";
-                    
-                    const serverClub = data.clubs[currentUser.id];
-                    if (newServerBid > serverClub.purse) throw "Insufficient funds!";
-                    if (serverClub.slots >= serverClub.maxSlots) throw "Squad full!";
-                    
-                    p.currentBid = newServerBid; 
-                    p.highestBidder = currentUser.id;
-                    
-                    data.auctionLogs = data.auctionLogs || [];
-                    data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `${serverClub.name} bid ${newServerBid.toFixed(1)} 🪙`, type: 'info' });
-                });
-            } catch (e) { 
-                window.showToast(typeof e === 'string' ? e : "Bid rejected. Try again!", "error"); 
-            }
-            
-            setTimeout(() => { isProcessingBid = false; }, 250); 
-        };
-
-        window.processCustomBid = function() {
-            const el = document.getElementById('custom-bid-amount');
-            if(!el || !el.value) return window.showToast("Enter a valid amount", "error");
-            const val = parseFloat(el.value);
-            if(isNaN(val)) return window.showToast("Invalid amount", "error");
-            window.processBid(val, false);
-            el.value = '';
-        };
-
-        window.adminFinalizeAuction = async function(playerId) {
-            const localP = appData.players.find(x => x.id === playerId);
-            if (localP) {
-                if (localP.highestBidder) {
-                    localP.status = 'SOLD'; localP.owner = localP.highestBidder;
-                } else {
-                    localP.status = 'UNSOLD';
-                }
-                appData.activePlayerId = null;
-                reRenderActiveViews();
-            }
-
-            try {
-                await safeUpdate(data => {
-                    const p = data.players.find(x => x.id === playerId);
-                    if (!p || p.status !== 'ACTIVE') throw "Player no longer active!";
-                    if (p.highestBidder) {
-                        p.status = 'SOLD'; p.owner = p.highestBidder;
-                        data.clubs[p.highestBidder].purse -= p.currentBid; data.clubs[p.highestBidder].slots += 1;
-                        data.auctionLogs = data.auctionLogs || [];
-                        data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `${p.name} SOLD to ${data.clubs[p.highestBidder].name} for ${p.currentBid.toFixed(1)} 🪙!`, type: 'success' });
-                    } else {
-                        p.status = 'UNSOLD';
-                        data.auctionLogs = data.auctionLogs || [];
-                        data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `${p.name} went UNSOLD.`, type: 'error' });
-                    }
-                    data.activePlayerId = null;
-                });
-                window.showToast("Auction finalized!");
-            } catch (e) { window.showToast(typeof e === 'string' ? e : "Error finalizing.", "error"); }
-        };
-
-        window.joinTradeRoom = async function() {
-            if (isProcessingTrade) return;
-            if (!currentUser || currentUser.role !== 'club') return window.showToast("Only clubs can trade.", "error");
-            isProcessingTrade = true;
-            try {
-                await safeUpdate(data => {
-                    const tr = data.tradeRoom || { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false };
-                    if (tr.clubA === currentUser.id || tr.clubB === currentUser.id) throw "You are already in the room!";
-                    if (!tr.clubA) tr.clubA = currentUser.id;
-                    else if (!tr.clubB) tr.clubB = currentUser.id;
-                    else throw "Trade room is full!";
-                    data.tradeRoom = tr;
-                });
-            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error joining room", "error"); }
-            isProcessingTrade = false;
-        };
-
-        window.leaveTradeRoom = async function() {
-            if (isProcessingTrade) return;
-            isProcessingTrade = true;
-            try {
-                await safeUpdate(data => { data.tradeRoom = { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false }; });
-                window.showToast("Trade Session closed.");
-            } catch(e) { window.showToast("Error leaving room", "error"); }
-            isProcessingTrade = false;
-        };
-
-        window.addToTradeOffer = async function(side) {
-            const selectEl = document.getElementById(`trade-select-${side}`);
-            if (!selectEl || !selectEl.value) return;
-            const pid = selectEl.value;
-            try {
-                await safeUpdate(data => {
-                    const tr = data.tradeRoom;
-                    if (side === 'A' && !tr.offerA.includes(pid)) tr.offerA.push(pid);
-                    if (side === 'B' && !tr.offerB.includes(pid)) tr.offerB.push(pid);
-                    tr.readyA = false; tr.readyB = false;
-                });
-            } catch(e) {}
-        };
-
-        window.removeFromTradeOffer = async function(pid, side) {
-            try {
-                await safeUpdate(data => {
-                    const tr = data.tradeRoom;
-                    if (side === 'A') tr.offerA = tr.offerA.filter(id => id !== pid);
-                    if (side === 'B') tr.offerB = tr.offerB.filter(id => id !== pid);
-                    tr.readyA = false; tr.readyB = false;
-                });
-            } catch(e) {}
-        };
-
-        window.setTradeMoney = async function(side) {
-            const inputEl = document.getElementById(`trade-money-${side}`);
-            if (!inputEl) return;
-            const amount = parseFloat(inputEl.value) || 0;
-            try {
-                await safeUpdate(data => {
-                    const tr = data.tradeRoom;
-                    const myClubId = side === 'A' ? tr.clubA : tr.clubB;
-                    const myClub = data.clubs[myClubId];
-                    if (amount > myClub.purse) throw "Insufficient funds for this offer!";
-                    if (amount < 0) throw "Amount cannot be negative.";
-                    if (side === 'A') tr.moneyA = amount;
-                    if (side === 'B') tr.moneyB = amount;
-                    tr.readyA = false; tr.readyB = false;
-                });
-                inputEl.value = ''; 
-            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error setting money.", "error"); }
-        };
-
-        window.toggleTradeReady = async function(side) {
-            if (isProcessingTrade) return;
-            isProcessingTrade = true;
-            try {
-                await safeUpdate(data => {
-                    const tr = data.tradeRoom;
-                    if (side === 'A') tr.readyA = !tr.readyA;
-                    if (side === 'B') tr.readyB = !tr.readyB;
-
-                    if (tr.readyA && tr.readyB) {
-                        const clubA = data.clubs[tr.clubA];
-                        const clubB = data.clubs[tr.clubB];
-                        const mA = tr.moneyA || 0; const mB = tr.moneyB || 0;
-
-                        if (clubA.purse < mA) throw `${clubA.name} lacks sufficient 🪙 to complete this trade! Cancel ready to fix.`;
-                        if (clubB.purse < mB) throw `${clubB.name} lacks sufficient 🪙 to complete this trade! Cancel ready to fix.`;
-
-                        const aGains = tr.offerB.length; const aLoses = tr.offerA.length;
-                        const bGains = tr.offerA.length; const bLoses = tr.offerB.length;
-
-                        if (clubA.slots - aLoses + aGains > clubA.maxSlots) throw `${clubA.name} exceeds max slots! Cancel ready to fix.`;
-                        if (clubB.slots - bLoses + bGains > clubB.maxSlots) throw `${clubB.name} exceeds max slots! Cancel ready to fix.`;
-
-                        tr.offerA.forEach(id => { const p = data.players.find(x => x.id === id); if(p) p.owner = tr.clubB; });
-                        tr.offerB.forEach(id => { const p = data.players.find(x => x.id === id); if(p) p.owner = tr.clubA; });
-
-                        clubA.purse = clubA.purse - mA + mB;
-                        clubB.purse = clubB.purse - mB + mA;
-                        clubA.slots = clubA.slots - aLoses + aGains;
-                        clubB.slots = clubB.slots - bLoses + bGains;
-
-                        let logMsg = `TRADE SUCCESS: ${clubA.name} & ${clubB.name} completed a direct asset swap!`;
-                        if (mA > 0 || mB > 0) {
-                            if (mA > mB) logMsg = `TRADE SUCCESS: ${clubA.name} & ${clubB.name} swapped assets. ${clubA.name} paid a net difference of ${(mA - mB).toFixed(1)} 🪙.`;
-                            if (mB > mA) logMsg = `TRADE SUCCESS: ${clubA.name} & ${clubB.name} swapped assets. ${clubB.name} paid a net difference of ${(mB - mA).toFixed(1)} 🪙.`;
-                        }
-
-                        data.auctionLogs = data.auctionLogs || [];
-                        data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: logMsg, type: 'success' });
-                        data.tradeRoom = { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false };
-                    }
-                });
-            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error locking trade.", "error"); }
-            isProcessingTrade = false;
-        };
-
-        // Init
-        document.addEventListener('DOMContentLoaded', () => {
-            lucide.createIcons();
-            updateNavAuth();
-            initMultiplayer();
-        });
-        document.getElementById('mobile-menu-btn').addEventListener('click', () => document.getElementById('mobile-menu').classList.toggle('hidden'));
-    </script>
-</body>
-</html>
+            const localP = appData.players.find(x => x.id === app

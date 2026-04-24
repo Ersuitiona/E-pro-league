@@ -1,0 +1,2696 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eFootball Pro League | Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { heading: ['Oswald', 'sans-serif'], body: ['Inter', 'sans-serif'] },
+                    colors: {
+                        efootball: { dark: '#0f172a', panel: '#1e293b', blue: '#3b82f6', neon: '#06b6d4', gold: '#fbbf24', red: '#ef4444' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        h1, h2, h3, h4, .font-heading { font-family: 'Oswald', sans-serif; text-transform: uppercase; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-border { box-shadow: 0 0 10px rgba(6, 182, 212, 0.5), inset 0 0 10px rgba(6, 182, 212, 0.5); border-color: #06b6d4; }
+        .gold-glow { box-shadow: 0 0 25px rgba(251, 191, 36, 0.4); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+        .page-view { animation: fadeIn 0.4s ease-in-out; }
+        .page-view:not(.active) { display: none !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Stadium Animation */
+        .stadium-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; background: #0f172a; }
+        .pitch { position: absolute; bottom: -20%; left: -50%; width: 200%; height: 60%; background: repeating-linear-gradient(0deg, #0a1f11, #0a1f11 40px, #0e2b18 40px, #0e2b18 80px); transform: perspective(500px) rotateX(70deg); opacity: 0.8; }
+        .spotlight { position: absolute; top: -20%; left: 50%; width: 100vw; height: 120vh; background: conic-gradient(from 180deg at 50% -20%, transparent 140deg, rgba(255,255,255,0.15) 180deg, transparent 220deg); transform-origin: top center; animation: searchlight 6s infinite alternate ease-in-out; pointer-events: none; }
+        @keyframes searchlight { 0% { transform: translateX(-50%) rotate(-30deg); } 100% { transform: translateX(-50%) rotate(30deg); } }
+        
+        /* Tactical Pitch CSS */
+        .soccer-pitch { background: #115e29; position: relative; border: 4px solid rgba(255,255,255,0.6); width: 100%; max-width: 600px; aspect-ratio: 2/3; margin: 0 auto; overflow: hidden; box-sizing: border-box; }
+        .pitch-lines::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; border-top: 4px solid rgba(255,255,255,0.6); transform: translateY(-50%); }
+        .pitch-lines::after { content: ''; position: absolute; top: 50%; left: 50%; width: 100px; height: 100px; border: 4px solid rgba(255,255,255,0.6); border-radius: 50%; transform: translate(-50%, -50%); }
+        .pitch-box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 200px; height: 80px; border: 4px solid rgba(255,255,255,0.6); border-top: none; }
+        .pitch-box-bottom { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 200px; height: 80px; border: 4px solid rgba(255,255,255,0.6); border-bottom: none; }
+    </style>
+</head>
+<body class="antialiased flex flex-col min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-panel border-b border-gray-800 transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="window.switchView('page-home')">
+                    <i data-lucide="gamepad-2" class="text-efootball-neon w-8 h-8"></i>
+                    <span class="font-heading font-bold text-2xl tracking-wider text-white">E-PRO <span class="text-efootball-neon">LEAGUE</span></span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <button onclick="window.switchView('page-home')" class="nav-btn text-efootball-neon hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</button>
+                        
+                        <div id="desktop-restricted-menu" class="hidden items-baseline space-x-4">
+                            <button onclick="window.switchView('page-rules')" class="nav-btn hover:text-efootball-neon px-3 py-2 rounded-md text-sm font-medium transition-colors">Rules</button>
+                            <button onclick="window.switchView('page-clubs')" class="nav-btn hover:text-efootball-neon px-3 py-2 rounded-md text-sm font-medium transition-colors">Clubs Info</button>
+                            <button onclick="window.switchView('page-players')" class="nav-btn hover:text-efootball-neon px-3 py-2 rounded-md text-sm font-medium transition-colors">Player Pool</button>
+                            <button onclick="window.switchView('page-mega-auction')" class="nav-btn text-efootball-gold hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1">
+                                <i data-lucide="mic" class="w-4 h-4"></i> Mega Auction
+                            </button>
+                            <button onclick="window.switchView('page-transfer-market')" class="nav-btn hover:text-efootball-neon px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1">
+                                <i data-lucide="arrow-right-left" class="w-4 h-4"></i> Transfer Market
+                            </button>
+                        </div>
+
+                        <div class="border-l border-gray-700 pl-4 ml-2 flex items-center gap-4">
+                            <div id="connection-status" class="w-3 h-3 rounded-full bg-red-500" title="Offline"></div>
+                            <button id="nav-dashboard-btn" onclick="window.goToDashboard()" class="hidden text-efootball-neon hover:text-white px-3 py-2 rounded-md text-sm font-bold transition-colors border border-efootball-neon">Dashboard</button>
+                            <button id="nav-login-btn" onclick="window.switchView('page-login')" class="bg-efootball-blue hover:bg-blue-400 text-white px-4 py-2 rounded-md text-sm font-bold transition-colors">Login</button>
+                            <button id="nav-logout-btn" onclick="window.handleLogout()" class="hidden text-red-400 hover:text-red-300 px-3 py-2 rounded-md text-sm font-bold transition-colors">Logout</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:hidden flex items-center gap-4">
+                    <div id="mobile-connection-status" class="w-3 h-3 rounded-full bg-red-500" title="Offline"></div>
+                    <button id="mobile-menu-btn" class="text-gray-300 hover:text-white"><i data-lucide="menu" class="w-6 h-6"></i></button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-efootball-panel border-b border-gray-700">
+            <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <button onclick="window.switchView('page-home')" class="w-full text-left block hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium">Home</button>
+                <div id="mobile-restricted-menu" class="hidden space-y-1">
+                    <button onclick="window.switchView('page-rules')" class="w-full text-left block hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium">Rules</button>
+                    <button onclick="window.switchView('page-clubs')" class="w-full text-left block hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium">Clubs Info</button>
+                    <button onclick="window.switchView('page-players')" class="w-full text-left block hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium">Player Pool</button>
+                    <button onclick="window.switchView('page-mega-auction')" class="w-full text-left block text-efootball-gold hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium">Mega Auction</button>
+                    <button onclick="window.switchView('page-transfer-market')" class="w-full text-left block hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium">Transfer Market</button>
+                </div>
+                <div class="border-t border-gray-700 pt-2 mt-2">
+                    <button id="mobile-dashboard-btn" onclick="window.goToDashboard()" class="hidden w-full text-left block text-efootball-neon hover:bg-gray-700 px-3 py-2 rounded-md text-base font-bold">Dashboard</button>
+                    <button id="mobile-login-btn" onclick="window.switchView('page-login')" class="w-full text-left block text-blue-400 hover:bg-gray-700 px-3 py-2 rounded-md text-base font-bold">Login</button>
+                    <button id="mobile-logout-btn" onclick="window.handleLogout()" class="hidden w-full text-left block text-red-400 hover:bg-gray-700 px-3 py-2 rounded-md text-base font-bold">Logout</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow pt-20" id="main-content">
+        
+        <!-- VIEW: HOME -->
+        <section id="page-home" class="page-view active relative min-h-[calc(100vh-80px)] overflow-hidden flex flex-col items-center justify-center py-12">
+            <div class="stadium-bg"><div class="pitch"></div><div class="spotlight"></div><div class="absolute inset-0 bg-gradient-to-t from-efootball-dark via-transparent to-efootball-dark z-0"></div></div>
+            <div class="relative z-10 max-w-6xl mx-auto px-4 w-full text-center">
+                <h1 class="font-heading text-5xl md:text-7xl font-bold tracking-tight mb-4 drop-shadow-lg">
+                    <span class="text-white">WELCOME TO THE</span> <br> <span class="text-transparent bg-clip-text bg-gradient-to-r from-efootball-neon to-blue-500">LEAGUE ARENA</span>
+                </h1>
+                <p id="home-subtitle" class="mt-4 max-w-2xl mx-auto text-xl text-gray-300 drop-shadow mb-12">Please log in to access the league portal.</p>
+
+                <div id="home-login-prompt" class="max-w-md mx-auto text-center glass-panel p-8 rounded-2xl border border-efootball-blue/50 gold-glow">
+                    <i data-lucide="lock" class="w-12 h-12 text-efootball-neon mx-auto mb-4"></i>
+                    <h3 class="text-2xl font-heading font-bold text-white mb-2">AUTHENTICATION REQUIRED</h3>
+                    <p class="text-gray-400 mb-6">You must be logged in as a registered Club or Admin to access the Mega Auction and Transfer Market.</p>
+                    <button onclick="window.switchView('page-login')" class="w-full bg-efootball-blue hover:bg-blue-400 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
+                        <i data-lucide="log-in" class="w-5 h-5"></i> Go to Login
+                    </button>
+                </div>
+
+                <div id="home-menu-grid" class="hidden grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+                    <div onclick="window.switchView('page-players')" class="glass-panel rounded-2xl p-8 border border-green-500/50 hover:border-green-400 transition-all cursor-pointer group hover:-translate-y-1">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="bg-green-500/20 p-4 rounded-xl group-hover:scale-110 transition-transform"><i data-lucide="users" class="w-10 h-10 text-green-400"></i></div>
+                            <div>
+                                <h3 class="font-heading text-2xl font-bold text-white group-hover:text-green-400 transition-colors">Player Pool</h3>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-left">View the complete database of players available for the upcoming Mega Auction.</p>
+                    </div>
+                    <div onclick="window.switchView('page-mega-auction')" class="glass-panel rounded-2xl p-8 border border-efootball-gold/50 hover:border-efootball-gold transition-all cursor-pointer group gold-glow hover:-translate-y-1">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="bg-efootball-gold/20 p-4 rounded-xl group-hover:scale-110 transition-transform"><i data-lucide="mic" class="w-10 h-10 text-efootball-gold"></i></div>
+                            <div>
+                                <h3 class="font-heading text-2xl font-bold text-white group-hover:text-efootball-gold transition-colors">Mega Auction</h3>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-left">Live player calling. Enter the Auction Room to bid on players in real time.</p>
+                    </div>
+                    <div onclick="window.switchView('page-transfer-market')" class="glass-panel rounded-2xl p-8 border border-purple-500/50 hover:border-purple-400 transition-all cursor-pointer group hover:-translate-y-1">
+                        <div class="flex items-center gap-4 mb-4">
+                            <div class="bg-purple-500/20 p-4 rounded-xl group-hover:scale-110 transition-transform"><i data-lucide="arrow-right-left" class="w-10 h-10 text-purple-400"></i></div>
+                            <div>
+                                <h3 class="font-heading text-2xl font-bold text-white group-hover:text-purple-400 transition-colors">Transfer Market</h3>
+                            </div>
+                        </div>
+                        <p class="text-gray-400 text-left">Post-auction phase. Buy listed players or negotiate direct trades.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: LOGIN PAGE -->
+        <section id="page-login" class="page-view py-20 min-h-[calc(100vh-80px)] flex items-center justify-center bg-efootball-dark relative">
+            <div class="glass-panel p-8 rounded-2xl border border-efootball-blue/50 w-full max-w-md relative z-10 neon-border">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-heading font-bold text-white">PORTAL <span class="text-efootball-neon">LOGIN</span></h2>
+                </div>
+                <form id="login-form" onsubmit="window.handleLogin(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-gray-300 text-sm font-bold mb-2">Username (Club ID / Admin)</label>
+                        <input type="text" id="username" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-efootball-neon" required>
+                    </div>
+                    <div>
+                        <label class="block text-gray-300 text-sm font-bold mb-2">Password</label>
+                        <input type="password" id="password" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-efootball-neon" required>
+                    </div>
+                    <div id="login-error" class="hidden text-red-500 text-sm font-bold bg-red-900/30 p-2 rounded border border-red-900">Invalid credentials. Try again.</div>
+                    <button type="submit" class="w-full bg-efootball-blue hover:bg-blue-400 text-white font-bold py-3 px-4 rounded-lg transition-colors">Secure Login</button>
+                    <div class="text-xs text-gray-500 mt-4 text-center bg-gray-900/50 p-3 rounded">
+                        Admin: <b>admin, admin1, admin2 / admin@123</b><br>
+                        Clubs: <b>[club_id] / [club_id]@123</b>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- VIEW: ADMIN DASHBOARD -->
+        <section id="page-admin-dashboard" class="page-view py-20 bg-efootball-dark min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
+                    <div>
+                        <h2 class="text-4xl font-heading font-bold text-white">ADMIN <span class="text-efootball-neon">CONTROL</span></h2>
+                    </div>
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <button onclick="window.factoryReset()" class="bg-red-700 hover:bg-red-600 text-white font-bold rounded px-4 py-2 border border-red-500 transition-colors flex items-center gap-2 shadow-lg">
+                            <i data-lucide="triangle-alert" class="w-4 h-4"></i> Reset All Data
+                        </button>
+                        <button onclick="window.toggleTransferMarket()" id="admin-tm-toggle" class="hidden bg-gray-700 hover:bg-gray-600 text-white font-bold rounded px-4 py-2 border border-gray-500 transition-colors">
+                            <i data-lucide="power" class="inline w-4 h-4"></i> Start TM Transactions
+                        </button>
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-400 text-sm font-bold">Phase:</span>
+                            <select id="admin-phase-select" onchange="window.changeLeaguePhase(this.value)" class="bg-gray-900 border border-gray-700 text-white font-bold rounded px-4 py-2 focus:outline-none focus:border-efootball-neon">
+                                <option value="PRE_SEASON">PRE-SEASON</option>
+                                <option value="MEGA_AUCTION">MEGA AUCTION (LIVE)</option>
+                                <option value="TRANSFER_MARKET">TRANSFER MARKET</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left Column -->
+                    <div class="space-y-8">
+                        <!-- Admin Player Management (Auction Calling) -->
+                        <div class="glass-panel rounded-xl overflow-hidden border border-gray-700 p-6">
+                            <h3 class="font-heading font-bold text-xl text-white mb-2"><i data-lucide="mic" class="inline text-efootball-gold"></i> Auction Caller (Live & Queued)</h3>
+                            <p class="text-sm text-gray-400 mb-4">Select a player to push them to the Live Mega Auction screen for bidding.</p>
+                            
+                            <div class="flex items-center gap-2 mb-3 bg-gray-900/50 p-2 rounded border border-gray-800 flex-wrap">
+                                <span class="text-xs text-gray-400 font-bold uppercase">Sort By:</span>
+                                <select id="admin-sort-by" onchange="window.updateAdminSort()" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:outline-none">
+                                    <option value="default">Default Order</option>
+                                    <option value="name">Player Name</option>
+                                    <option value="pos">Position</option>
+                                </select>
+                                <button onclick="window.toggleAdminSort()" id="admin-sort-dir" class="bg-gray-800 border border-gray-600 rounded px-3 py-1 text-xs text-white font-bold hover:bg-gray-700 transition-colors">ASC</button>
+                                
+                                <div class="h-4 w-px bg-gray-700 mx-2"></div>
+                                
+                                <span class="text-xs text-gray-400 font-bold uppercase">Filter:</span>
+                                <select id="admin-filter-pos" onchange="window.updateAdminFilterPos()" class="bg-gray-800 border border-gray-600 rounded px-2 py-1 text-xs text-white focus:outline-none">
+                                    <option value="ALL">All Positions</option>
+                                    <option value="CF">CF</option><option value="SS">SS</option><option value="LWF">LWF</option><option value="RWF">RWF</option>
+                                    <option value="AMF">AMF</option><option value="CMF">CMF</option><option value="DMF">DMF</option>
+                                    <option value="LMF">LMF</option><option value="RMF">RMF</option>
+                                    <option value="CB">CB</option><option value="LB">LB</option><option value="RB">RB</option>
+                                    <option value="GK">GK</option>
+                                </select>
+                            </div>
+
+                            <div class="overflow-y-auto max-h-[250px] pr-2">
+                                <table class="w-full text-left text-sm text-gray-300">
+                                    <thead class="text-xs text-gray-400 uppercase bg-gray-900/50">
+                                        <tr>
+                                            <th class="px-3 py-2">Player</th>
+                                            <th class="px-3 py-2">Status</th>
+                                            <th class="px-3 py-2 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-caller-table">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Admin Unsold Bucket -->
+                        <div class="glass-panel rounded-xl overflow-hidden border border-red-900/50 p-6 bg-red-950/10">
+                            <h3 class="font-heading font-bold text-xl text-white mb-4"><i data-lucide="archive-restore" class="inline text-red-400"></i> Unsold Players Bucket</h3>
+                            <p class="text-sm text-gray-400 mb-4">Players here automatically appear in the Transfer Market. You can also re-queue them for the Mega Auction.</p>
+                            <div class="overflow-y-auto max-h-[250px] pr-2">
+                                <table class="w-full text-left text-sm text-gray-300">
+                                    <thead class="text-xs text-red-400/70 uppercase bg-red-900/20">
+                                        <tr>
+                                            <th class="px-3 py-2">Player</th>
+                                            <th class="px-3 py-2 text-right">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="admin-unsold-table">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Add Player Form -->
+                    <div class="glass-panel rounded-xl overflow-hidden border border-gray-700 p-6 h-fit">
+                        <h3 class="font-heading font-bold text-xl text-white mb-4"><i data-lucide="user-plus" class="inline text-green-400"></i> Add Player to Pool</h3>
+                        <form id="admin-add-player-form" onsubmit="window.handleAddPlayer(event)">
+                            <div class="space-y-4">
+                                <input type="text" id="add-p-name" placeholder="Player Name" class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white" required>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <select id="add-p-pos" class="bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white" required>
+                                        <option value="">Position</option>
+                                        <option value="CF">CF</option><option value="SS">SS</option><option value="LWF">LWF</option><option value="RWF">RWF</option>
+                                        <option value="AMF">AMF</option><option value="CMF">CMF</option><option value="DMF">DMF</option>
+                                        <option value="LMF">LMF</option><option value="RMF">RMF</option>
+                                        <option value="CB">CB</option><option value="LB">LB</option><option value="RB">RB</option>
+                                        <option value="GK">GK</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded">Add Player</button>
+                                <button type="button" onclick="window.openBulkAddModal()" class="w-full mt-2 bg-gray-800 hover:bg-gray-700 text-gray-300 border border-gray-600 font-bold py-2 rounded text-sm transition-colors flex justify-center items-center gap-2">
+                                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Bulk Import Players
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Club Budgets -->
+                <div class="mt-8 glass-panel rounded-xl overflow-hidden border border-gray-700 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-heading font-bold text-xl text-white">Club Management</h3>
+                        <button onclick="window.openAddClubModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 text-xs font-bold rounded transition-colors flex items-center gap-1 shadow"><i data-lucide="plus" class="w-3 h-3"></i> Add Club</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="text-xs text-gray-400 uppercase bg-gray-900/50">
+                                <tr>
+                                    <th class="px-4 py-2">Club</th>
+                                    <th class="px-4 py-2">Purse</th>
+                                    <th class="px-4 py-2">Slots</th>
+                                    <th class="px-4 py-2 text-center">Tokens (T1/T2/T3)</th>
+                                    <th class="px-4 py-2 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-club-table">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: CLUB DASHBOARD -->
+        <section id="page-club-dashboard" class="page-view py-20 bg-efootball-dark min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="glass-panel p-8 rounded-2xl border-t-4 border-efootball-gold mb-10">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div>
+                            <h2 id="dash-club-name" class="text-4xl font-heading font-bold text-white mb-2">Club Name</h2>
+                            <div class="flex gap-4">
+                                <button onclick="window.openEditClubNameModal()" class="text-sm text-blue-400 hover:text-white underline flex items-center gap-1"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit Name</button>
+                                <button onclick="window.openChangePasswordModal()" class="text-sm text-blue-400 hover:text-white underline flex items-center gap-1"><i data-lucide="key" class="w-3 h-3"></i> Change Password</button>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-center">
+                                <span class="block text-xs text-gray-400 font-bold uppercase mb-1">Purse Balance</span>
+                                <span id="dash-club-purse" class="text-3xl font-bold text-efootball-gold drop-shadow-md">0 🪙</span>
+                            </div>
+                            <div class="bg-gray-900/80 p-4 rounded-xl border border-gray-700 text-center">
+                                <span class="block text-xs text-gray-400 font-bold uppercase mb-1">Squad Slots</span>
+                                <span id="dash-club-slots" class="text-3xl font-bold text-white">0 / 23</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DYNAMIC AUCTION BANNER -->
+                <div id="dash-live-auction-banner" class="hidden flex-col md:flex-row justify-between items-center glass-panel p-6 rounded-xl border border-efootball-gold mb-8 gold-glow bg-efootball-gold/10">
+                    <div class="mb-4 md:mb-0 text-center md:text-left">
+                        <h3 class="font-heading font-bold text-2xl text-efootball-gold flex items-center justify-center md:justify-start gap-2">
+                            <i data-lucide="mic" class="animate-pulse"></i> MEGA AUCTION IS LIVE!
+                        </h3>
+                        <p class="text-gray-300 text-sm mt-1">The Admin has opened the Mega Auction window. Enter the room to bid on players.</p>
+                    </div>
+                    <button onclick="window.switchView('page-mega-auction')" class="bg-efootball-gold hover:bg-yellow-400 text-black font-bold py-3 px-8 rounded-lg transition-transform hover:scale-105 shadow-lg shadow-efootball-gold/30 whitespace-nowrap">
+                        Join Auction Room
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Squad List -->
+                    <div class="glass-panel rounded-xl border border-gray-700 p-6 flex flex-col h-full">
+                        <h3 class="font-heading font-bold text-xl text-white mb-4 flex items-center gap-2"><i data-lucide="users" class="text-green-400"></i> Current Squad</h3>
+                        <ul class="space-y-2 mb-4 flex-grow max-h-[300px] overflow-y-auto pr-2" id="dash-squad-list">
+                            <!-- JS populated -->
+                        </ul>
+                        <button id="dash-view-pitch-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-3 mt-2 rounded shadow-lg flex justify-center items-center gap-2 transition-colors">
+                            <i data-lucide="monitor-play" class="w-5 h-5"></i> View Tactical Pitch
+                        </button>
+                        <div class="border-t border-gray-700 pt-4 mt-4">
+                            <h4 class="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2"><i data-lucide="archive" class="w-4 h-4"></i> Special Assets</h4>
+                            <div class="flex justify-between text-sm mb-3 bg-gray-900/50 p-2 rounded">
+                                <span class="text-gray-400">Paid Retentions</span>
+                                <span id="dash-club-retentions" class="text-purple-400 font-bold">0 / 2</span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2">
+                                <div class="text-center bg-gray-900/50 p-2 rounded border border-yellow-500/30">
+                                    <span class="block text-xs text-gray-400">Tier 1</span>
+                                    <span id="dash-club-t1" class="text-yellow-400 font-bold text-lg">0</span>
+                                </div>
+                                <div class="text-center bg-gray-900/50 p-2 rounded border border-gray-400/30">
+                                    <span class="block text-xs text-gray-400">Tier 2</span>
+                                    <span id="dash-club-t2" class="text-gray-300 font-bold text-lg">0</span>
+                                </div>
+                                <div class="text-center bg-gray-900/50 p-2 rounded border border-orange-500/30">
+                                    <span class="block text-xs text-gray-400">Tier 3</span>
+                                    <span id="dash-club-t3" class="text-orange-400 font-bold text-lg">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Actions -->
+                    <div class="glass-panel rounded-xl border border-gray-700 p-6 flex flex-col justify-center items-center text-center">
+                        <i data-lucide="arrow-right-left" class="w-16 h-16 text-purple-400 mb-4"></i>
+                        <h3 class="font-heading font-bold text-xl text-white mb-2">Trade Center</h3>
+                        <p class="text-sm text-gray-400 mb-6">Visit the Transfer Market to initiate direct Club-to-Club player trades or list your players for sale.</p>
+                        <button onclick="window.openTransferListingModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2 mb-3">
+                            <i data-lucide="tag" class="w-5 h-5"></i> List Player for Sale
+                        </button>
+                        <button onclick="window.switchView('page-transfer-market')" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
+                            <i data-lucide="log-in" class="w-5 h-5"></i> Enter Trade Market
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: PLAYER POOL -->
+        <section id="page-players" class="page-view py-20 bg-efootball-dark min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-8">
+                    <i data-lucide="users" class="w-16 h-16 text-green-500 mx-auto mb-4"></i>
+                    <h2 class="text-4xl font-heading font-bold text-white mb-2">PLAYER <span class="text-green-500">POOL</span></h2>
+                    <p class="text-gray-400 max-w-2xl mx-auto">Browse the complete database of players and track their live auction status.</p>
+                </div>
+                
+                <div id="player-counts-container" class="flex flex-wrap justify-center gap-2 mb-6">
+                    <!-- Populated by JS -->
+                </div>
+                
+                <div class="flex items-center justify-center gap-2 mb-6 flex-wrap">
+                    <span class="text-xs text-gray-400 font-bold uppercase">Sort By:</span>
+                    <select id="pool-sort-by" onchange="window.updatePoolSort()" class="bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none">
+                        <option value="default">Default Order</option>
+                        <option value="name">Player Name</option>
+                        <option value="pos">Position</option>
+                        <option value="basePrice">Base Price</option>
+                    </select>
+                    <button onclick="window.togglePoolSort()" id="pool-sort-dir" class="bg-gray-800 border border-gray-600 rounded px-4 py-2 text-sm text-white font-bold hover:bg-gray-700 transition-colors">ASC</button>
+                    
+                    <div class="h-6 w-px bg-gray-700 mx-2 hidden sm:block"></div>
+                    
+                    <span class="text-xs text-gray-400 font-bold uppercase">Filter:</span>
+                    <select id="pool-filter-pos" onchange="window.updatePoolFilterPos()" class="bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none">
+                        <option value="ALL">All Positions</option>
+                        <option value="CF">CF</option><option value="SS">SS</option><option value="LWF">LWF</option><option value="RWF">RWF</option>
+                        <option value="AMF">AMF</option><option value="CMF">CMF</option><option value="DMF">DMF</option>
+                        <option value="LMF">LMF</option><option value="RMF">RMF</option>
+                        <option value="CB">CB</option><option value="LB">LB</option><option value="RB">RB</option>
+                        <option value="GK">GK</option>
+                    </select>
+                </div>
+
+                <div class="glass-panel rounded-xl overflow-hidden border border-gray-700">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-300">
+                            <thead class="text-xs text-gray-400 uppercase bg-gray-900/50">
+                                <tr>
+                                    <th class="px-6 py-4">Player Name</th>
+                                    <th class="px-6 py-4 text-center">Position</th>
+                                    <th class="px-6 py-4 text-center">Base Price</th>
+                                    <th class="px-6 py-4 text-right">Auction Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="player-pool-table">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: MEGA AUCTION ROOM (LIVE) -->
+        <section id="page-mega-auction" class="page-view relative bg-black min-h-screen py-20 flex flex-col">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-efootball-gold/10 pointer-events-none"></div>
+            <div class="max-w-7xl mx-auto px-4 w-full relative z-10">
+                
+                <div class="text-center mb-8">
+                    <h2 class="text-4xl md:text-5xl font-heading font-bold text-white mb-2">MEGA AUCTION <span class="text-efootball-gold">ROOM</span></h2>
+                    <div class="inline-flex items-center justify-center p-2 bg-red-900/30 rounded-full">
+                        <span class="px-4 py-1 text-red-500 font-bold tracking-widest text-sm rounded-full border border-red-500 animate-pulse">LIVE MULTIPLAYER FEED</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- MAIN AUCTION BLOCK (Col Span 2) -->
+                    <div class="lg:col-span-2 glass-panel rounded-2xl p-8 border border-gray-700 relative min-h-[500px] flex flex-col justify-center items-center">
+                        
+                        <!-- Waiting State -->
+                        <div id="auction-waiting-state" class="text-center w-full hidden">
+                            <i data-lucide="radio" class="w-24 h-24 text-gray-600 mx-auto mb-6 animate-pulse"></i>
+                            <h2 class="text-4xl font-heading font-bold text-gray-400 mb-2">WAITING FOR ADMIN...</h2>
+                            <p class="text-gray-500">The auction floor is quiet. Waiting for the next player to be called.</p>
+                        </div>
+
+                        <!-- Live State -->
+                        <div id="auction-live-state" class="w-full max-w-lg mx-auto">
+                            
+                            <!-- Player Card Central -->
+                            <div class="glass-panel rounded-2xl overflow-hidden gold-glow border-efootball-gold shadow-2xl relative mb-8">
+                                <div class="h-56 bg-gradient-to-t from-gray-900 to-gray-800 relative flex justify-center items-end pb-4">
+                                    <i data-lucide="user" class="w-40 h-40 text-gray-500 opacity-50"></i>
+                                    <div class="absolute bottom-4 left-4">
+                                        <span id="auc-p-pos" class="bg-blue-600 text-white font-bold px-3 py-1 rounded shadow">CF</span>
+                                    </div>
+                                </div>
+                                <div class="p-8 text-left">
+                                    <h3 id="auc-p-name" class="font-heading text-3xl font-bold text-white mb-6 text-center">PLAYER NAME</h3>
+                                    
+                                    <div class="bg-gray-900 rounded-xl p-6 mb-6 border border-gray-700 text-center">
+                                        <p class="text-gray-400 text-sm uppercase font-bold mb-1">Current Bid</p>
+                                        <p id="auc-p-bid" class="text-efootball-gold font-bold text-4xl mb-2">15.0 🪙</p>
+                                        <p class="text-gray-400 text-sm">Highest Bidder: <span id="auc-p-bidder" class="font-bold text-white">None</span></p>
+                                    </div>
+
+                                    <div id="auc-controls-container" class="w-full space-y-3">
+                                        <!-- Controls injected via JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SIDEBAR: Logs & Club Status -->
+                    <div class="space-y-6 flex flex-col lg:h-[500px]">
+                        <!-- Live Logs -->
+                        <div class="glass-panel rounded-xl border border-gray-700 flex flex-col h-[240px] overflow-hidden">
+                            <div class="bg-gray-900 px-4 py-3 border-b border-gray-700 font-bold text-white flex items-center gap-2">
+                                <i data-lucide="list-ordered" class="w-4 h-4 text-efootball-neon"></i> Activity Feed
+                            </div>
+                            <div class="p-4 overflow-y-auto flex-grow space-y-2 text-sm" id="auction-log-container">
+                                <!-- JS Populated -->
+                            </div>
+                        </div>
+
+                        <!-- Club Purses -->
+                        <div class="glass-panel rounded-xl border border-gray-700 flex flex-col h-[240px] overflow-hidden">
+                            <div class="bg-gray-900 px-4 py-3 border-b border-gray-700 font-bold text-white flex items-center gap-2">
+                                <i data-lucide="wallet" class="w-4 h-4 text-efootball-gold"></i> Live Scoreboard
+                            </div>
+                            <div class="p-4 overflow-y-auto flex-grow space-y-3 text-sm" id="auction-live-clubs">
+                                <!-- JS Populated -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- VIEW: TRANSFER MARKET -->
+        <section id="page-transfer-market" class="page-view py-20 bg-efootball-dark min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl md:text-5xl font-heading font-bold text-white mb-4">TRANSFER <span class="text-purple-500">MARKET</span></h2>
+                    <p class="text-gray-400">Buy listed players or negotiate Club-to-Club live trades. Active post-auction.</p>
+                </div>
+                
+                <div id="tm-closed-state" class="text-center glass-panel p-10 rounded-2xl max-w-2xl mx-auto hidden">
+                    <i data-lucide="lock" class="w-16 h-16 text-gray-600 mx-auto mb-4"></i>
+                    <h3 class="text-2xl font-bold text-white mb-2">Market Closed</h3>
+                    <p class="text-gray-400" id="tm-closed-msg">The Transfer Market will open after the Mega Auction concludes.</p>
+                </div>
+
+                <div id="tm-open-state" class="hidden">
+
+                    <!-- LIVE TRADE ROOM -->
+                    <div class="glass-panel p-6 rounded-2xl border-t-4 border-purple-500 mb-12 shadow-2xl relative overflow-hidden">
+                        <h3 class="font-heading text-2xl font-bold text-white mb-6 border-b border-gray-700 pb-2 flex justify-between items-center">
+                            <span><i data-lucide="arrow-right-left" class="inline text-purple-400 mr-2"></i> Live Trade Room</span>
+                            <span class="text-xs bg-purple-900/50 text-purple-300 px-3 py-1 rounded-full border border-purple-500/50 flex items-center gap-1"><i data-lucide="radio" class="w-3 h-3 animate-pulse"></i> SYNCHRONIZED</span>
+                        </h3>
+                        
+                        <!-- Lobby (Waiting / Empty) -->
+                        <div id="tm-trade-lobby" class="text-center py-10">
+                            <!-- Populated by JS -->
+                        </div>
+
+                        <!-- Active Split-Screen Room -->
+                        <div id="tm-trade-active" class="hidden grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- Side A -->
+                            <div id="trade-side-a" class="bg-gray-900/50 rounded-xl p-6 border border-gray-700 relative">
+                                <!-- Populated by JS -->
+                            </div>
+                            <!-- Side B -->
+                            <div id="trade-side-b" class="bg-gray-900/50 rounded-xl p-6 border border-gray-700 relative">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div id="tm-trade-leave-btn" class="hidden mt-6 text-center border-t border-gray-700 pt-6">
+                            <button onclick="window.leaveTradeRoom()" class="bg-gray-800 hover:bg-red-900/80 text-gray-300 hover:text-white px-6 py-2 rounded font-bold transition-colors border border-gray-600 hover:border-red-500">Leave Trade Session</button>
+                        </div>
+                    </div>
+
+                    <!-- TRANSFER LISTINGS (Player for Money) -->
+                    <h3 class="font-heading text-2xl font-bold text-blue-400 mb-6 border-b border-gray-700 pb-2"><i data-lucide="tags" class="inline w-6 h-6 mr-2"></i>Listed by Clubs</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12" id="tm-listings-grid">
+                        <!-- JS Populated -->
+                    </div>
+
+                    <!-- UNSOLD FREE AGENTS -->
+                    <h3 class="font-heading text-2xl font-bold text-white mb-6 border-b border-gray-700 pb-2">Unsold Free Agents</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12" id="tm-unsold-grid">
+                        <!-- JS Populated -->
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: CLUBS INFO -->
+        <section id="page-clubs" class="page-view py-20 bg-efootball-dark min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-4xl font-heading font-bold text-white text-center mb-10">CLUBS <span class="text-gray-400">OVERVIEW</span></h2>
+                <div class="text-center mb-8">
+                    <div class="inline-block bg-gray-900 border border-gray-700 rounded-lg px-4 py-2">
+                        <span class="text-gray-400 text-sm font-bold">Default Starting Budget: <span class="text-efootball-gold">150.0 🪙</span> | Squad Size: <span class="text-white">Min 18 / Max 23</span></span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="clubs-info-grid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW: RULES -->
+        <section id="page-rules" class="page-view py-20 bg-efootball-dark min-h-screen">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-5xl font-heading font-bold text-white mb-4">LEAGUE <span class="text-efootball-blue">RULES</span> & T&C</h2>
+                    <p class="text-gray-400 max-w-2xl mx-auto">Please read the guidelines carefully before participating.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div class="glass-panel p-8 rounded-2xl border-t-4 border-efootball-blue">
+                        <h3 class="text-2xl font-heading font-bold mb-4 text-white">Match Rules</h3>
+                        <ul class="space-y-4 text-gray-300">
+                            <li><strong class="text-white">Match Duration:</strong> 10 mins (5 min/half).</li>
+                            <li><strong class="text-white">Condition:</strong> Normal arrows.</li>
+                        </ul>
+                    </div>
+                    <div class="glass-panel p-8 rounded-2xl border-t-4 border-purple-500">
+                        <h3 class="text-2xl font-heading font-bold mb-4 text-white">Transfer Rules</h3>
+                        <ul class="space-y-4 text-gray-300">
+                            <li><strong class="text-white">Budget:</strong> 150🪙 max.</li>
+                            <li><strong class="text-white">Squad Size:</strong> Min 18 / Max 23 slots.</li>
+                            <li><strong class="text-white">Trade Room:</strong> Direct 1-to-1 negotiations for swapping players and money between active rosters.</li>
+                            <li><strong class="text-white">Player Listings:</strong> You can list any signed player for a specific amount of coins. Other clubs can buy them directly.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- MODALS -->
+    <!-- Squad Pitch Modal -->
+    <div id="squad-pitch-modal" class="fixed inset-0 bg-black/90 z-[120] hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="glass-panel p-4 md:p-8 rounded-2xl w-full max-w-3xl max-h-screen overflow-y-auto relative">
+            <button onclick="window.closeSquadPitch()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
+
+            <div class="flex justify-between items-center mb-6 mt-4 flex-wrap gap-4">
+                <h3 id="pitch-club-name" class="text-2xl font-heading font-bold text-white uppercase tracking-wider">CLUB SQUAD</h3>
+                <div class="flex items-center gap-4">
+                    <select id="pitch-formation-select" onchange="window.changePitchFormation()" class="bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white focus:outline-none shadow">
+                        <option value="4-3-3">4-3-3</option>
+                        <option value="4-4-2">4-4-2</option>
+                        <option value="4-2-3-1">4-2-3-1</option>
+                        <option value="3-5-2">3-5-2</option>
+                    </select>
+                    <button onclick="window.downloadPitchImage()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded font-bold shadow-lg flex items-center gap-2 text-sm">
+                        <i data-lucide="camera" class="w-4 h-4"></i> Screenshot
+                    </button>
+                </div>
+            </div>
+
+            <!-- Capture Area -->
+            <div id="capture-pitch-area" class="bg-efootball-dark p-4 rounded-xl border border-gray-700">
+                <div class="text-center mb-4">
+                    <h2 id="capture-club-title" class="text-3xl font-heading font-bold text-white mb-1 uppercase">CLUB NAME</h2>
+                    <p class="text-efootball-gold font-bold text-sm">STARTING XI & SUBS</p>
+                </div>
+
+                <!-- Pitch -->
+                <div class="soccer-pitch rounded">
+                    <div class="pitch-lines"></div>
+                    <div class="pitch-box-top"></div>
+                    <div class="pitch-box-bottom"></div>
+                    
+                    <!-- Player Nodes Container -->
+                    <div id="pitch-players-container" class="absolute inset-0">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Subs -->
+                <div class="mt-6 border-t border-gray-700 pt-4">
+                    <h4 class="text-white font-bold mb-3 text-center uppercase text-sm text-gray-400">Substitutes & Reserves</h4>
+                    <div id="pitch-subs-container" class="flex flex-wrap justify-center gap-2">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Listing Modal -->
+    <div id="transfer-list-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-blue-600 w-full max-w-sm">
+            <h3 class="text-2xl font-heading font-bold text-white mb-4">List Player for Sale</h3>
+            <p class="text-xs text-gray-400 mb-4">Put your player on the open market. Another club can buy them instantly for the asking price.</p>
+            <form onsubmit="window.submitTransferListing(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Select Player</label>
+                    <select id="list-p-select" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Asking Price (🪙)</label>
+                    <input type="number" id="list-p-price" step="0.5" min="0" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('transfer-list-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 font-bold hover:bg-gray-600">Cancel</button>
+                    <button type="submit" class="w-1/2 bg-blue-600 text-white rounded py-2 font-bold hover:bg-blue-500">List Player</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="change-pwd-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-gray-600 w-full max-w-sm">
+            <h3 class="text-2xl font-heading font-bold text-white mb-4">Change Password</h3>
+            <form onsubmit="window.saveNewPassword(event)" class="space-y-4">
+                <input type="password" id="new-pwd" placeholder="New Password" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                <div class="flex gap-2">
+                    <button type="button" onclick="document.getElementById('change-pwd-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 font-bold hover:bg-gray-600">Cancel</button>
+                    <button type="submit" class="w-1/2 bg-efootball-neon text-black rounded py-2 font-bold hover:bg-cyan-400">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Club Name Modal (For Clubs) -->
+    <div id="edit-club-name-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-gray-600 w-full max-w-sm">
+            <h3 class="text-2xl font-heading font-bold text-white mb-4">Edit Club Name</h3>
+            <form onsubmit="window.saveClubName(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">New Club Name</label>
+                    <input type="text" id="new-club-name" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('edit-club-name-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 font-bold hover:bg-gray-600">Cancel</button>
+                    <button type="submit" class="w-1/2 bg-efootball-blue text-white rounded py-2 font-bold hover:bg-blue-400">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Bulk Add Player Modal -->
+    <div id="bulk-add-player-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-green-600 w-full max-w-lg">
+            <h3 class="text-2xl font-heading font-bold text-white mb-2"><i data-lucide="file-spreadsheet" class="inline text-green-400 mr-2"></i> Bulk Import Players</h3>
+            <p class="text-gray-400 text-xs mb-4">Format each line as: <strong class="text-white">1 Name (Position)</strong> or <strong class="text-white">Name, Position</strong><br>Example: <code class="bg-gray-900 px-1 rounded text-green-300">1 L. MESSI (CF)</code><br>(Base Price is automatically set to 0 🪙)</p>
+            <form onsubmit="window.processBulkAdd(event)" class="space-y-4">
+                <textarea id="bulk-player-data" rows="8" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white text-sm focus:border-green-500 focus:outline-none font-mono placeholder-gray-600" placeholder="1 L. MESSI (CF)&#10;2 C. RONALDO (LWF)"></textarea>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('bulk-add-player-modal').classList.add('hidden')" class="w-1/3 bg-gray-700 text-white rounded py-2 font-bold hover:bg-gray-600">Cancel</button>
+                    <button type="submit" class="w-2/3 bg-green-600 text-white rounded py-2 font-bold hover:bg-green-500">Import Players</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Edit Club Modal -->
+    <div id="edit-club-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-gray-600 w-full max-w-md">
+            <h3 class="text-xl font-heading font-bold text-white mb-4">Edit <span id="edit-club-name" class="text-efootball-neon"></span></h3>
+            <form onsubmit="window.saveClubEdits(event)" class="space-y-4">
+                <input type="hidden" id="edit-club-id">
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="block text-xs text-gray-400 mb-1">Purse Balance</label>
+                        <input type="number" id="edit-club-purse" step="0.5" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-xs text-gray-400 mb-1">Club Password</label>
+                        <input type="text" id="edit-club-pwd" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="block text-xs text-gray-400 mb-1">Slots Used</label>
+                        <input type="number" id="edit-club-slots" min="0" max="23" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-xs text-gray-400 mb-1">Paid Retentions</label>
+                        <input type="number" id="edit-club-retentions" min="0" max="2" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Retention Tokens (Rewards)</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <input type="number" id="edit-club-t1" min="0" placeholder="Tier 1" class="w-full bg-gray-900 border border-yellow-500/50 rounded px-2 py-2 text-white text-center" title="Tier 1 Tokens" required>
+                        <input type="number" id="edit-club-t2" min="0" placeholder="Tier 2" class="w-full bg-gray-900 border border-gray-500/50 rounded px-2 py-2 text-white text-center" title="Tier 2 Tokens" required>
+                        <input type="number" id="edit-club-t3" min="0" placeholder="Tier 3" class="w-full bg-gray-900 border border-orange-500/50 rounded px-2 py-2 text-white text-center" title="Tier 3 Tokens" required>
+                    </div>
+                </div>
+                
+                <div class="border-t border-gray-700 pt-3 mt-3">
+                    <label class="block text-xs text-gray-400 mb-2 font-bold">Club Roster (Return to Pool)</label>
+                    <div class="max-h-32 overflow-y-auto bg-gray-900/50 border border-gray-700 rounded p-2">
+                        <ul id="edit-club-roster" class="space-y-1">
+                            <!-- Populated by JS -->
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('edit-club-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 hover:bg-gray-600 font-bold">Cancel</button>
+                    <button type="submit" class="w-1/2 bg-blue-500 text-white rounded py-2 hover:bg-blue-400 font-bold">Save</button>
+                </div>
+
+                <div class="border-t border-gray-700 pt-3 mt-3">
+                    <button type="button" onclick="window.openClubResetConfirm()" class="w-full bg-red-900/40 text-red-400 border border-red-900/50 rounded py-2 hover:bg-red-600 hover:text-white font-bold transition-colors">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4 inline mr-1"></i> Factory Reset This Club
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Assign Player Modal -->
+    <div id="assign-player-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-gray-600 w-full max-w-sm">
+            <h3 class="text-xl font-heading font-bold text-white mb-4">Direct Assign: <br><span id="assign-player-name" class="text-efootball-neon text-2xl"></span></h3>
+            <form onsubmit="window.submitAssignPlayer(event)" class="space-y-4">
+                <input type="hidden" id="assign-player-id">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Select Club (Retention / Manual Assign)</label>
+                    <select id="assign-club-select" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                        <!-- JS Populated -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Assignment Price (🪙)</label>
+                    <input type="number" id="assign-price" step="0.5" min="0" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('assign-player-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 hover:bg-gray-600 font-bold">Cancel</button>
+                    <button type="submit" class="w-1/2 bg-purple-500 text-white rounded py-2 hover:bg-purple-400 font-bold">Assign Player</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Edit Player Modal -->
+    <div id="edit-player-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-gray-600 w-full max-w-sm">
+            <h3 class="text-xl font-heading font-bold text-white mb-4">Edit Player</h3>
+            <form onsubmit="window.submitEditPlayer(event)" class="space-y-4">
+                <input type="hidden" id="edit-p-id">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Player Name</label>
+                    <input type="text" id="edit-p-name" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Position</label>
+                    <select id="edit-p-pos" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                        <option value="CF">CF</option><option value="SS">SS</option><option value="LWF">LWF</option><option value="RWF">RWF</option>
+                        <option value="AMF">AMF</option><option value="CMF">CMF</option><option value="DMF">DMF</option>
+                        <option value="LMF">LMF</option><option value="RMF">RMF</option>
+                        <option value="CB">CB</option><option value="LB">LB</option><option value="RB">RB</option>
+                        <option value="GK">GK</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Base Price (🪙)</label>
+                    <input type="number" id="edit-p-price" step="0.5" min="0" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('edit-player-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 hover:bg-gray-600 font-bold">Cancel</button>
+                    <button type="submit" class="w-1/2 bg-blue-500 text-white rounded py-2 hover:bg-blue-400 font-bold">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Add Club Modal -->
+    <div id="add-club-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-blue-600 w-full max-w-md">
+            <h3 class="text-xl font-heading font-bold text-white mb-4">Add New Club</h3>
+            <form onsubmit="window.submitAddClub(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Club Login ID (No spaces, lowercase)</label>
+                    <input type="text" id="add-club-id" placeholder="e.g. arsenal" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white lowercase" required pattern="[a-z0-9]+">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Display Name</label>
+                    <input type="text" id="add-club-name" placeholder="e.g. Arsenal FC" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-1/2">
+                        <label class="block text-xs text-gray-400 mb-1">Theme Color</label>
+                        <select id="add-club-color" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                            <option value="blue">Blue</option><option value="red">Red</option>
+                            <option value="green">Green</option><option value="yellow">Yellow</option>
+                            <option value="purple">Purple</option><option value="cyan">Cyan</option>
+                            <option value="indigo">Indigo</option><option value="gray">Gray</option>
+                        </select>
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-xs text-gray-400 mb-1">Initial Password</label>
+                        <input type="text" id="add-club-pwd" value="club@123" class="w-full bg-gray-900 border border-gray-700 rounded px-4 py-2 text-white" required>
+                    </div>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="document.getElementById('add-club-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 hover:bg-gray-600 font-bold">Cancel</button>
+                    <button type="submit" class="w-1/2 bg-blue-500 text-white rounded py-2 hover:bg-blue-400 font-bold">Create Club</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Factory Reset Modal -->
+    <div id="reset-confirm-modal" class="fixed inset-0 bg-black/80 z-[100] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-red-600 w-full max-w-sm text-center">
+            <i data-lucide="triangle-alert" class="w-16 h-16 text-red-500 mx-auto mb-4"></i>
+            <h3 class="text-2xl font-heading font-bold text-white mb-2">FACTORY RESET</h3>
+            <p class="text-gray-400 mb-6 text-sm">Are you sure? This will delete all transactions, reset club purses, and clear all squad data back to default.</p>
+            <div class="flex gap-2">
+                <button type="button" onclick="document.getElementById('reset-confirm-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 font-bold hover:bg-gray-600">Cancel</button>
+                <button type="button" onclick="window.executeFactoryReset()" class="w-1/2 bg-red-600 text-white rounded py-2 font-bold hover:bg-red-500 shadow-lg shadow-red-500/50">YES, RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Club Specific Reset Modal -->
+    <div id="club-reset-confirm-modal" class="fixed inset-0 bg-black/80 z-[110] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-red-600 w-full max-w-sm text-center">
+            <i data-lucide="triangle-alert" class="w-16 h-16 text-red-500 mx-auto mb-4"></i>
+            <h3 class="text-2xl font-heading font-bold text-white mb-2">RESET CLUB</h3>
+            <p class="text-gray-400 mb-6 text-sm">Are you sure? This will remove all signed players, reset the purse to 150 🪙, and clear all tokens/slots for this specific club.</p>
+            <div class="flex gap-2">
+                <button type="button" onclick="document.getElementById('club-reset-confirm-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 font-bold hover:bg-gray-600">Cancel</button>
+                <button type="button" onclick="window.executeClubReset()" class="w-1/2 bg-red-600 text-white rounded py-2 font-bold hover:bg-red-500 shadow-lg shadow-red-500/50">YES, RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Club Confirm Modal -->
+    <div id="delete-club-confirm-modal" class="fixed inset-0 bg-black/80 z-[110] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-red-600 w-full max-w-sm text-center">
+            <i data-lucide="trash-2" class="w-16 h-16 text-red-500 mx-auto mb-4"></i>
+            <h3 class="text-2xl font-heading font-bold text-white mb-2">DELETE CLUB</h3>
+            <p class="text-gray-400 mb-6 text-sm">Are you sure? This will PERMANENTLY delete <span id="del-club-name-span" class="font-bold text-white"></span> and free all its players back to the pool.</p>
+            <div class="flex gap-2">
+                <input type="hidden" id="del-club-id">
+                <button type="button" onclick="document.getElementById('delete-club-confirm-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 font-bold hover:bg-gray-600">Cancel</button>
+                <button type="button" onclick="window.executeDeleteClub()" class="w-1/2 bg-red-600 text-white rounded py-2 font-bold hover:bg-red-500 shadow-lg shadow-red-500/50">DELETE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Player Confirm Modal -->
+    <div id="delete-player-confirm-modal" class="fixed inset-0 bg-black/80 z-[110] hidden flex items-center justify-center">
+        <div class="glass-panel p-8 rounded-2xl border border-red-600 w-full max-w-sm text-center">
+            <i data-lucide="user-minus" class="w-16 h-16 text-red-500 mx-auto mb-4"></i>
+            <h3 class="text-2xl font-heading font-bold text-white mb-2">DELETE PLAYER</h3>
+            <p class="text-gray-400 mb-6 text-sm">Are you sure? This will PERMANENTLY remove <span id="del-player-name-span" class="font-bold text-white"></span> from the database.</p>
+            <div class="flex gap-2">
+                <input type="hidden" id="del-player-id">
+                <button type="button" onclick="document.getElementById('delete-player-confirm-modal').classList.add('hidden')" class="w-1/2 bg-gray-700 text-white rounded py-2 font-bold hover:bg-gray-600">Cancel</button>
+                <button type="button" onclick="window.executeDeletePlayer()" class="w-1/2 bg-red-600 text-white rounded py-2 font-bold hover:bg-red-500 shadow-lg shadow-red-500/50">DELETE</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- BACKEND SCRIPT MODULE -->
+    <script>
+        // Application State
+        let currentUser = JSON.parse(sessionStorage.getItem('efootball_user')) || null;
+        let isProcessingBid = false;
+        let isProcessingTrade = false;
+        let isOnline = false;
+        
+        const API_URL = 'http://localhost:3000/api/state';
+
+        let adminSort = { by: 'default', asc: true };
+        let adminFilterPos = 'ALL';
+        let poolSort = { by: 'default', asc: true };
+        let poolFilterPos = 'ALL';
+        let currentPitchClubId = null;
+
+        // Default Fallback Seed Data
+        const defaultData = {
+            leaguePhase: 'PRE_SEASON', 
+            isTransferMarketActive: false, 
+            activePlayerId: null,
+            auctionLogs: [], 
+            admins: {
+                'admin': 'admin@123',
+                'admin1': 'admin@123',
+                'admin2': 'admin@123'
+            },
+            transferListings: [],
+            tradeRoom: { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false },
+            clubs: {
+                'lazio': { name: 'Lazio', color: 'cyan', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'lazio@123' },
+                'inter': { name: 'Inter Milan', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'inter@123' },
+                'acmilan': { name: 'AC Milan', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'acmilan@123' },
+                'barcelona': { name: 'Barcelona', color: 'indigo', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'barcelona@123' },
+                'atletico': { name: 'Atletico Madrid', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'atletico@123' },
+                'leicester': { name: 'Leicester City', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'leicester@123' },
+                'manutd': { name: 'Man Utd', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'manutd@123' },
+                'mancity': { name: 'Man City', color: 'cyan', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'mancity@123' },
+                'liverpool': { name: 'Liverpool', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'liverpool@123' },
+                'clubamerica': { name: 'Club America', color: 'yellow', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'clubamerica@123' },
+                'psg': { name: 'PSG', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'psg@123' },
+                'ajax': { name: 'Ajax', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'ajax@123' },
+                'juventus': { name: 'Juventus', color: 'gray', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'juventus@123' }
+            },
+            players: [
+                { id: 'p1', name: 'L. MESSI', pos: 'CF', basePrice: 0, currentBid: 0, highestBidder: null, status: 'WAITING', owner: null },
+                { id: 'p2', name: 'V. VAN DIJK', pos: 'CB', basePrice: 0, currentBid: 0, highestBidder: null, status: 'WAITING', owner: null },
+                { id: 'p3', name: 'K. DE BRUYNE', pos: 'CMF', basePrice: 0, currentBid: 0, highestBidder: null, status: 'WAITING', owner: null }
+            ],
+            transactions: []
+        };
+
+        let appData = JSON.parse(JSON.stringify(defaultData));
+
+        const colorMap = {
+            'blue': '#2563eb', 'red': '#dc2626', 'green': '#16a34a', 'yellow': '#ca8a04',
+            'purple': '#9333ea', 'cyan': '#0891b2', 'indigo': '#4f46e5', 'gray': '#4b5563'
+        };
+
+        const formations = {
+            '4-3-3': [ {top:'88%',left:'50%'}, {top:'70%',left:'20%'}, {top:'75%',left:'38%'}, {top:'75%',left:'62%'}, {top:'70%',left:'80%'}, {top:'50%',left:'30%'}, {top:'55%',left:'50%'}, {top:'50%',left:'70%'}, {top:'25%',left:'25%'}, {top:'15%',left:'50%'}, {top:'25%',left:'75%'} ],
+            '4-4-2': [ {top:'88%',left:'50%'}, {top:'70%',left:'20%'}, {top:'75%',left:'38%'}, {top:'75%',left:'62%'}, {top:'70%',left:'80%'}, {top:'45%',left:'20%'}, {top:'50%',left:'40%'}, {top:'50%',left:'60%'}, {top:'45%',left:'80%'}, {top:'20%',left:'35%'}, {top:'20%',left:'65%'} ],
+            '4-2-3-1': [ {top:'88%',left:'50%'}, {top:'70%',left:'20%'}, {top:'75%',left:'38%'}, {top:'75%',left:'62%'}, {top:'70%',left:'80%'}, {top:'60%',left:'40%'}, {top:'60%',left:'60%'}, {top:'35%',left:'20%'}, {top:'35%',left:'50%'}, {top:'35%',left:'80%'}, {top:'15%',left:'50%'} ],
+            '3-5-2': [ {top:'88%',left:'50%'}, {top:'75%',left:'25%'}, {top:'75%',left:'50%'}, {top:'75%',left:'75%'}, {top:'45%',left:'15%'}, {top:'55%',left:'40%'}, {top:'55%',left:'60%'}, {top:'45%',left:'85%'}, {top:'35%',left:'50%'}, {top:'20%',left:'35%'}, {top:'20%',left:'65%'} ]
+        };
+
+        function ensureDataIntegrity(data) {
+            let sanitized = data ? { ...data } : JSON.parse(JSON.stringify(defaultData));
+            if (!sanitized.clubs) sanitized.clubs = JSON.parse(JSON.stringify(defaultData.clubs));
+            if (!sanitized.players) sanitized.players = JSON.parse(JSON.stringify(defaultData.players));
+            if (!sanitized.admins) sanitized.admins = JSON.parse(JSON.stringify(defaultData.admins));
+            if (!sanitized.tradeRoom) sanitized.tradeRoom = { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false };
+            if (!sanitized.transferListings) sanitized.transferListings = [];
+            if (!sanitized.leaguePhase) sanitized.leaguePhase = 'PRE_SEASON';
+            if (!sanitized.auctionLogs) sanitized.auctionLogs = [];
+            return sanitized;
+        }
+
+        async function initMultiplayer() {
+            try {
+                const res = await fetch(API_URL);
+                const serverData = await res.json();
+                
+                if (serverData) {
+                    appData = ensureDataIntegrity(serverData);
+                } else {
+                    // Push default data if server is empty
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(appData)
+                    });
+                }
+                
+                isOnline = true;
+                document.getElementById('connection-status').classList.replace('bg-red-500', 'bg-green-500');
+                document.getElementById('connection-status').title = "Online (MySQL Connected)";
+                document.getElementById('mobile-connection-status').classList.replace('bg-red-500', 'bg-green-500');
+                reRenderActiveViews();
+
+                // Setup HTTP Polling for Real-time Sync
+                setInterval(async () => {
+                    if (isProcessingBid || isProcessingTrade) return;
+                    try {
+                        const pollRes = await fetch(API_URL);
+                        const pollData = await pollRes.json();
+                        if (pollData) {
+                            appData = ensureDataIntegrity(pollData);
+                            reRenderActiveViews();
+                            
+                            // Re-check online status visually
+                            if(!isOnline) {
+                                isOnline = true;
+                                document.getElementById('connection-status').classList.replace('bg-red-500', 'bg-green-500');
+                                document.getElementById('mobile-connection-status').classList.replace('bg-red-500', 'bg-green-500');
+                            }
+                        }
+                    } catch(e) { 
+                        isOnline = false;
+                        document.getElementById('connection-status').classList.replace('bg-green-500', 'bg-red-500');
+                        document.getElementById('mobile-connection-status').classList.replace('bg-green-500', 'bg-red-500');
+                    }
+                }, 2000); // 2-second interval polling
+
+            } catch(e) {
+                console.error("Backend offline. Running local memory mode.", e);
+                window.showToast("Local Backend Offline. Changes will not save.", "error");
+                isOnline = false;
+            }
+        }
+
+        async function safeUpdate(actionFn) {
+            if (isOnline) {
+                try {
+                    const res = await fetch(API_URL);
+                    let serverData = await res.json();
+                    serverData = ensureDataIntegrity(serverData);
+                    
+                    actionFn(serverData); // Apply local mutation logic to the server object
+                    
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(serverData)
+                    });
+                    
+                    appData = serverData;
+                    reRenderActiveViews();
+                } catch(e) {
+                    console.error("Sync error in safeUpdate", e);
+                    throw e;
+                }
+            } else {
+                const tempData = JSON.parse(JSON.stringify(appData));
+                actionFn(tempData);
+                appData = ensureDataIntegrity(tempData);
+                reRenderActiveViews();
+            }
+        }
+
+        async function pushState() {
+            if (isOnline) {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(appData)
+                });
+            } 
+        }
+
+        // --- GLOBAL DOM ACTIONS ---
+        
+        window.showToast = function(msg, type='success') {
+            const container = document.getElementById('toast-container');
+            if(!container) return;
+            const t = document.createElement('div');
+            t.className = `${type==='success'?'bg-green-600':'bg-red-600'} text-white px-4 py-3 rounded shadow-lg transition-all duration-300 transform translate-y-10 opacity-0 flex items-center gap-2 pointer-events-auto`;
+            t.innerHTML = `<i data-lucide="${type==='success'?'check-circle':'alert-circle'}" class="w-5 h-5"></i> ${msg}`;
+            container.appendChild(t);
+            lucide.createIcons();
+            setTimeout(() => t.classList.remove('translate-y-10', 'opacity-0'), 10);
+            setTimeout(() => { t.classList.add('translate-y-10', 'opacity-0'); setTimeout(()=>t.remove(), 300); }, 3000);
+        };
+
+        window.switchView = function(pageId) {
+            const restricted = ['page-rules', 'page-clubs', 'page-players', 'page-mega-auction', 'page-transfer-market', 'page-admin-dashboard', 'page-club-dashboard'];
+            if (!currentUser && restricted.includes(pageId)) {
+                window.showToast('Action Denied: Please log in.', 'error');
+                return window.switchView('page-login');
+            }
+            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById(pageId);
+            if(target) target.classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-white', 'text-yellow-300', 'text-efootball-neon');
+                if(btn.textContent.includes('Auction')) btn.classList.add('text-efootball-gold');
+                else btn.classList.add('text-gray-300');
+                if(btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(pageId)) {
+                    if(pageId === 'page-mega-auction') btn.classList.add('text-yellow-300');
+                    else btn.classList.add('text-efootball-neon');
+                }
+            });
+            document.getElementById('mobile-menu').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            reRenderActiveViews();
+        };
+
+        window.handleLogin = function(e) {
+            e.preventDefault();
+            const userVal = document.getElementById('username').value.toLowerCase().trim();
+            const passVal = document.getElementById('password').value;
+            const err = document.getElementById('login-error');
+            err.classList.add('hidden');
+            const isAdmin = (appData.admins && appData.admins[userVal] === passVal) || (userVal === 'admin' && passVal === 'admin@123');
+            if (isAdmin) {
+                currentUser = { role: 'admin', id: userVal, name: 'Admin ' + userVal };
+                completeLogin();
+            } else if (appData.clubs && appData.clubs[userVal] && passVal === appData.clubs[userVal].pwd) {
+                currentUser = { role: 'club', id: userVal, name: appData.clubs[userVal].name };
+                completeLogin();
+            } else {
+                err.classList.remove('hidden');
+            }
+        };
+
+        function completeLogin() {
+            sessionStorage.setItem('efootball_user', JSON.stringify(currentUser));
+            document.getElementById('login-form').reset();
+            updateNavAuth();
+            window.goToDashboard();
+            window.showToast('Logged in successfully!');
+        }
+
+        window.handleLogout = function() {
+            currentUser = null;
+            sessionStorage.removeItem('efootball_user');
+            updateNavAuth();
+            window.switchView('page-home');
+            window.showToast('Logged out.');
+        };
+
+        function updateNavAuth() {
+            const isAuth = !!currentUser;
+            document.getElementById('nav-login-btn').classList.toggle('hidden', isAuth);
+            document.getElementById('nav-logout-btn').classList.toggle('hidden', !isAuth);
+            document.getElementById('nav-dashboard-btn').classList.toggle('hidden', !isAuth);
+            document.getElementById('mobile-login-btn').classList.toggle('hidden', isAuth);
+            document.getElementById('mobile-logout-btn').classList.toggle('hidden', !isAuth);
+            document.getElementById('mobile-dashboard-btn').classList.toggle('hidden', !isAuth);
+            if (isAuth) {
+                document.getElementById('desktop-restricted-menu').classList.remove('hidden');
+                document.getElementById('desktop-restricted-menu').classList.add('flex');
+                document.getElementById('mobile-restricted-menu').classList.remove('hidden');
+                document.getElementById('home-menu-grid').classList.remove('hidden');
+                document.getElementById('home-login-prompt').classList.add('hidden');
+                document.getElementById('home-subtitle').textContent = "Select a portal to explore.";
+            } else {
+                document.getElementById('desktop-restricted-menu').classList.add('hidden');
+                document.getElementById('desktop-restricted-menu').classList.remove('flex');
+                document.getElementById('mobile-restricted-menu').classList.add('hidden');
+                document.getElementById('home-menu-grid').classList.add('hidden');
+                document.getElementById('home-login-prompt').classList.remove('hidden');
+                document.getElementById('home-subtitle').textContent = "Please log in.";
+            }
+        }
+
+        window.goToDashboard = function() {
+            if (!currentUser) return window.switchView('page-login');
+            if (currentUser.role === 'admin') window.switchView('page-admin-dashboard');
+            else window.switchView('page-club-dashboard');
+        };
+
+        window.openChangePasswordModal = function() { document.getElementById('change-pwd-modal').classList.remove('hidden'); };
+        
+        window.saveNewPassword = async function(e) {
+            e.preventDefault();
+            if(!appData.clubs[currentUser.id]) return;
+            appData.clubs[currentUser.id].pwd = document.getElementById('new-pwd').value;
+            await pushState();
+            document.getElementById('change-pwd-modal').classList.add('hidden');
+            window.showToast('Password updated successfully!');
+            document.getElementById('new-pwd').value = '';
+        };
+
+        window.openEditClubNameModal = function() {
+            if(!currentUser || currentUser.role !== 'club') return;
+            if(!appData.clubs[currentUser.id]) return;
+            document.getElementById('new-club-name').value = appData.clubs[currentUser.id].name;
+            document.getElementById('edit-club-name-modal').classList.remove('hidden');
+        };
+
+        window.saveClubName = async function(e) {
+            e.preventDefault();
+            const newName = document.getElementById('new-club-name').value.trim();
+            if(!newName) return window.showToast("Club name cannot be empty.", "error");
+            try {
+                await safeUpdate(data => {
+                    if(data.clubs[currentUser.id]) {
+                        data.clubs[currentUser.id].name = newName;
+                    }
+                });
+                document.getElementById('edit-club-name-modal').classList.add('hidden');
+                window.showToast("Club Name updated successfully!");
+                currentUser.name = newName;
+                sessionStorage.setItem('efootball_user', JSON.stringify(currentUser));
+            } catch(err) {
+                window.showToast(typeof err === 'string' ? err : "Error updating club name.", "error");
+            }
+        };
+
+        window.changeLeaguePhase = async function(phase) {
+            appData.leaguePhase = phase;
+            if (phase !== 'TRANSFER_MARKET') appData.isTransferMarketActive = false; 
+            await pushState(); 
+            window.showToast(`League Phase changed to: ${phase.replace('_', ' ')}`);
+            reRenderActiveViews();
+        };
+
+        window.toggleTransferMarket = async function() {
+            appData.isTransferMarketActive = !appData.isTransferMarketActive;
+            await pushState();
+            reRenderActiveViews();
+            window.showToast(appData.isTransferMarketActive ? 'Transfer Market LIVE!' : 'Transfer Market PAUSED.', appData.isTransferMarketActive ? 'success' : 'error');
+        };
+
+        window.factoryReset = function() { document.getElementById('reset-confirm-modal').classList.remove('hidden'); };
+
+        window.executeFactoryReset = async function() {
+            document.getElementById('reset-confirm-modal').classList.add('hidden');
+            try {
+                if (isOnline) {
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(defaultData)
+                    });
+                }
+                appData = JSON.parse(JSON.stringify(defaultData));
+                reRenderActiveViews();
+                window.showToast("System Reset Successful!", "success");
+            } catch(e) { window.showToast("Reset failed.", "error"); }
+        };
+
+        window.openClubResetConfirm = function() { document.getElementById('club-reset-confirm-modal').classList.remove('hidden'); };
+
+        window.executeClubReset = async function() {
+            document.getElementById('club-reset-confirm-modal').classList.add('hidden');
+            const clubId = document.getElementById('edit-club-id').value;
+            if (!clubId) return;
+            try {
+                await safeUpdate(data => {
+                    const club = data.clubs[clubId];
+                    if (!club) throw "Club not found!";
+                    club.purse = 150.0; club.slots = 0; club.retentions = 0; club.tokens = { t1: 0, t2: 0, t3: 0 }; club.pwd = clubId + '@123';
+                    data.players.forEach(p => {
+                        if (p.owner === clubId && p.status === 'SOLD') { p.status = 'WAITING'; p.owner = null; p.currentBid = p.basePrice; p.highestBidder = null; }
+                    });
+                    if (data.tradeRoom && (data.tradeRoom.clubA === clubId || data.tradeRoom.clubB === clubId)) {
+                        data.tradeRoom = { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false };
+                    }
+                    if (data.transferListings) data.transferListings = data.transferListings.filter(l => l.clubId !== clubId);
+                    data.auctionLogs = data.auctionLogs || [];
+                    data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `Admin factory reset club: ${club.name}. All players returned to pool.`, type: 'error' });
+                });
+                document.getElementById('edit-club-modal').classList.add('hidden');
+                window.showToast(`${appData.clubs[clubId]?.name || 'Club'} has been fully reset!`, "success");
+            } catch(e) { window.showToast(typeof e === 'string' ? e : "Reset failed.", "error"); }
+        };
+
+        window.openDeleteClubConfirm = function(clubId) {
+            document.getElementById('del-club-id').value = clubId;
+            document.getElementById('del-club-name-span').textContent = appData.clubs[clubId]?.name || 'Club';
+            document.getElementById('delete-club-confirm-modal').classList.remove('hidden');
+        };
+
+        window.executeDeleteClub = async function() {
+            document.getElementById('delete-club-confirm-modal').classList.add('hidden');
+            const clubId = document.getElementById('del-club-id').value;
+            if (!clubId) return;
+
+            try {
+                await safeUpdate(data => {
+                    if (!data.clubs[clubId]) throw "Club not found!";
+                    data.players.forEach(p => {
+                        if (p.owner === clubId) { p.status = 'WAITING'; p.owner = null; p.highestBidder = null; p.currentBid = p.basePrice; }
+                    });
+                    if (data.tradeRoom && (data.tradeRoom.clubA === clubId || data.tradeRoom.clubB === clubId)) {
+                        data.tradeRoom = { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false };
+                    }
+                    if(data.transferListings) data.transferListings = data.transferListings.filter(l => l.clubId !== clubId);
+                    delete data.clubs[clubId];
+                });
+                window.showToast("Club successfully deleted!");
+            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error deleting club.", "error"); }
+        };
+
+        window.updateAdminSort = function() { adminSort.by = document.getElementById('admin-sort-by').value; reRenderActiveViews(); };
+        window.toggleAdminSort = function() { adminSort.asc = !adminSort.asc; document.getElementById('admin-sort-dir').textContent = adminSort.asc ? 'ASC' : 'DESC'; reRenderActiveViews(); };
+        window.updateAdminFilterPos = function() { const select = document.getElementById('admin-filter-pos'); if (select) { adminFilterPos = select.value; reRenderActiveViews(); } };
+        window.updatePoolSort = function() { poolSort.by = document.getElementById('pool-sort-by').value; renderPlayerPool(); };
+        window.togglePoolSort = function() { poolSort.asc = !poolSort.asc; document.getElementById('pool-sort-dir').textContent = poolSort.asc ? 'ASC' : 'DESC'; renderPlayerPool(); };
+        window.updatePoolFilterPos = function() { const select = document.getElementById('pool-filter-pos'); if (select) { poolFilterPos = select.value; renderPlayerPool(); } };
+
+        function reRenderActiveViews() {
+            if (document.getElementById('page-admin-dashboard')?.classList.contains('active')) renderAdminDashboard();
+            if (document.getElementById('page-club-dashboard')?.classList.contains('active')) renderClubDashboard();
+            if (document.getElementById('page-mega-auction')?.classList.contains('active')) renderMegaAuction();
+            if (document.getElementById('page-transfer-market')?.classList.contains('active')) renderTransferMarket();
+            if (document.getElementById('page-clubs')?.classList.contains('active')) renderClubsInfo();
+            if (document.getElementById('page-players')?.classList.contains('active')) renderPlayerPool();
+        }
+
+        function renderAdminDashboard() {
+            document.getElementById('admin-phase-select').value = appData.leaguePhase || 'PRE_SEASON';
+            const tmToggle = document.getElementById('admin-tm-toggle');
+            if (appData.leaguePhase === 'TRANSFER_MARKET') {
+                tmToggle.classList.remove('hidden');
+                if (appData.isTransferMarketActive) {
+                    tmToggle.className = "bg-green-600 hover:bg-green-500 text-white font-bold rounded px-4 py-2 border border-green-500 transition-colors flex items-center gap-2";
+                    tmToggle.innerHTML = '<i data-lucide="pause" class="w-4 h-4"></i> Pause TM Transactions';
+                } else {
+                    tmToggle.className = "bg-gray-700 hover:bg-gray-600 text-white font-bold rounded px-4 py-2 border border-gray-500 transition-colors flex items-center gap-2";
+                    tmToggle.innerHTML = '<i data-lucide="play" class="w-4 h-4"></i> Start TM Transactions';
+                }
+            } else tmToggle.classList.add('hidden');
+            
+            const cbody = document.getElementById('admin-caller-table');
+            const ubody = document.getElementById('admin-unsold-table');
+
+            const sortSelect = document.getElementById('admin-sort-by');
+            if(sortSelect) sortSelect.value = adminSort.by;
+            const filterSelect = document.getElementById('admin-filter-pos');
+            if(filterSelect) filterSelect.value = adminFilterPos;
+
+            let sortedPlayers = (appData.players || []).filter(p => adminFilterPos === 'ALL' || p.pos === adminFilterPos);
+            if (adminSort.by !== 'default') {
+                sortedPlayers.sort((a, b) => {
+                    let valA = a[adminSort.by]; let valB = b[adminSort.by];
+                    if (valA < valB) return adminSort.asc ? -1 : 1;
+                    if (valA > valB) return adminSort.asc ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            let cbodyHtml = '';
+            let ubodyHtml = '';
+
+            sortedPlayers.forEach(p => {
+                if (p.status === 'UNSOLD') {
+                    ubodyHtml += `<tr class="border-b border-red-900/50 hover:bg-red-900/20 transition-colors">
+                        <td class="px-3 py-2 text-gray-300 font-bold">${p.name} <span class="text-xs text-gray-500">(${p.pos})</span></td>
+                        <td class="px-3 py-2 text-right">
+                            <div class="flex justify-end gap-1">
+                                <button onclick="window.reAuctionPlayer('${p.id}')" class="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 text-xs font-bold rounded transition-colors">Re-Auction</button>
+                                <button onclick="window.openAssignModal('${p.id}')" class="bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 text-xs font-bold rounded transition-colors" title="Direct Assign">Assign</button>
+                                <button onclick="window.openEditPlayerModal('${p.id}')" class="bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 text-xs font-bold rounded transition-colors" title="Edit Player"><i data-lucide="pencil" class="w-3 h-3"></i></button>
+                                <button onclick="window.openDeletePlayerConfirm('${p.id}')" class="bg-red-900/80 hover:bg-red-600 text-red-400 hover:text-white px-2 py-1 text-xs font-bold rounded transition-colors" title="Delete Player"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+                } else if (p.status !== 'SOLD') { 
+                    let btn = '';
+                    if(p.status === 'WAITING') {
+                        btn = `<div class="flex justify-end gap-1">
+                            <button onclick="window.putPlayerOnBlock('${p.id}')" class="bg-efootball-neon text-black px-2 py-1 text-xs font-bold rounded hover:bg-cyan-400">Call</button>
+                            <button onclick="window.openAssignModal('${p.id}')" class="bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 text-xs font-bold rounded transition-colors" title="Direct Assign">Assign</button>
+                            <button onclick="window.openEditPlayerModal('${p.id}')" class="bg-gray-600 hover:bg-gray-500 text-white px-2 py-1 text-xs font-bold rounded transition-colors" title="Edit Player"><i data-lucide="pencil" class="w-3 h-3"></i></button>
+                            <button onclick="window.openDeletePlayerConfirm('${p.id}')" class="bg-red-900/80 hover:bg-red-600 text-red-400 hover:text-white px-2 py-1 text-xs font-bold rounded transition-colors" title="Delete Player"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                        </div>`;
+                    }
+                    else if(p.status === 'ON_BLOCK') btn = `<span class="text-yellow-500 font-bold text-xs">ON STAGE</span>`;
+                    else if(p.status === 'ACTIVE') btn = `<span class="text-red-500 font-bold text-xs animate-pulse">LIVE</span>`;
+                    else btn = `<span class="text-gray-500 text-xs">${p.status}</span>`;
+                    
+                    cbodyHtml += `<tr class="border-b border-gray-800">
+                        <td class="px-3 py-2 text-white font-bold">${p.name} <span class="text-xs text-gray-500">(${p.pos})</span></td>
+                        <td class="px-3 py-2 text-xs">${p.status}</td>
+                        <td class="px-3 py-2 text-right">${btn}</td>
+                    </tr>`;
+                }
+            });
+
+            if (cbody) cbody.innerHTML = cbodyHtml;
+            if (ubody) ubody.innerHTML = ubodyHtml;
+
+            const tbody = document.getElementById('admin-club-table');
+            if(tbody) {
+                let clubHtml = '';
+                for(const [id, data] of Object.entries(appData.clubs || {})) {
+                    clubHtml += `<tr class="border-b border-gray-800">
+                        <td class="px-4 py-2 text-white font-bold">${data.name}</td>
+                        <td class="px-4 py-2 font-mono text-efootball-gold">${data.purse.toFixed(1)} 🪙</td>
+                        <td class="px-4 py-2 text-gray-400">${data.slots}/${data.maxSlots}</td>
+                        <td class="px-4 py-2 text-center text-xs font-bold bg-gray-900/50 rounded"><span class="text-yellow-400">T1: ${data.tokens.t1}</span> | <span class="text-gray-300">T2: ${data.tokens.t2}</span> | <span class="text-orange-400">T3: ${data.tokens.t3}</span></td>
+                        <td class="px-4 py-2 text-right">
+                            <div class="flex justify-end gap-1">
+                                <button onclick="window.openEditModal('${id}')" class="bg-gray-700 px-2 py-1 text-xs rounded text-white hover:bg-gray-600 transition-colors">Edit</button>
+                                <button onclick="window.openDeleteClubConfirm('${id}')" class="bg-red-900/80 px-2 py-1 text-xs rounded text-red-400 hover:bg-red-600 hover:text-white transition-colors" title="Delete Club"><i data-lucide="trash" class="w-3 h-3"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+                }
+                tbody.innerHTML = clubHtml;
+            }
+            lucide.createIcons();
+        }
+
+        function renderMegaAuction() {
+            const liveState = document.getElementById('auction-live-state');
+            const waitState = document.getElementById('auction-waiting-state');
+            const activePid = appData.activePlayerId;
+
+            // Logs
+            const logContainer = document.getElementById('auction-log-container');
+            if (logContainer) {
+                let logsHtml = '';
+                (appData.auctionLogs || []).forEach(log => {
+                    let colorClass = 'text-gray-300';
+                    if (log.type === 'success') colorClass = 'text-green-400';
+                    if (log.type === 'error') colorClass = 'text-red-400';
+                    if (log.type === 'info') colorClass = 'text-blue-400';
+                    logsHtml += `<div class="${colorClass} py-1 border-b border-gray-800 last:border-0"><span class="text-xs text-gray-500 mr-2">[${log.time}]</span> ${log.msg}</div>`;
+                });
+                logContainer.innerHTML = logsHtml;
+            }
+
+            // Live Clubs Scoreboard
+            const clubsContainer = document.getElementById('auction-live-clubs');
+            if (clubsContainer) {
+                let liveClubsHtml = '';
+                Object.values(appData.clubs || {}).sort((a,b) => b.purse - a.purse).forEach(club => {
+                    liveClubsHtml += `
+                        <div class="flex justify-between items-center bg-gray-800 p-2 rounded">
+                            <span class="font-bold text-white">${club.name} <span class="text-xs text-gray-400 font-normal">(${club.slots}/${club.maxSlots})</span></span>
+                            <span class="text-efootball-gold font-bold">${club.purse.toFixed(1)} 🪙</span>
+                        </div>
+                    `;
+                });
+                clubsContainer.innerHTML = liveClubsHtml;
+            }
+
+            if (!activePid) {
+                if (liveState) liveState.classList.add('hidden');
+                if (waitState) waitState.classList.remove('hidden');
+                return;
+            }
+
+            const p = (appData.players || []).find(x => x.id === activePid);
+            if (!p) return;
+
+            if (liveState) liveState.classList.remove('hidden');
+            if (waitState) waitState.classList.add('hidden');
+
+            document.getElementById('auc-p-name').textContent = p.name;
+            document.getElementById('auc-p-pos').textContent = p.pos;
+            document.getElementById('auc-p-bid').textContent = p.currentBid.toFixed(1) + ' 🪙';
+            
+            // Safeguard against missing club
+            const bidderName = p.highestBidder && appData.clubs && appData.clubs[p.highestBidder] ? appData.clubs[p.highestBidder].name : (p.highestBidder ? 'Unknown' : 'None (Base Price)');
+            document.getElementById('auc-p-bidder').textContent = bidderName;
+
+            const controls = document.getElementById('auc-controls-container');
+            if (controls) {
+                controls.innerHTML = '';
+
+                if (currentUser?.role === 'admin') {
+                    if (p.status === 'ON_BLOCK') {
+                        controls.innerHTML = `<button onclick="window.startBidding()" class="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl text-xl animate-pulse shadow-[0_0_15px_rgba(22,163,74,0.5)]">START BIDDING</button>`;
+                    } else if (p.status === 'ACTIVE') {
+                        controls.innerHTML = `<button onclick="window.adminFinalizeAuction('${p.id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-4 rounded-xl text-xl shadow-[0_0_15px_rgba(220,38,38,0.5)]">FINALIZE AUCTION (SOLD/UNSOLD)</button>`;
+                    }
+                } else if (currentUser?.role === 'club') {
+                    if (p.status === 'ON_BLOCK') {
+                        controls.innerHTML = `<div class="text-center p-4 bg-gray-800 rounded-xl text-gray-400 font-bold border border-gray-700">Waiting for Admin to open bidding...</div>`;
+                    } else if (p.status === 'ACTIVE') {
+                        const myClub = appData.clubs[currentUser.id];
+                        if (!myClub) return; // Prevent crash if club details are missing
+                        if (p.highestBidder === currentUser.id) {
+                            controls.innerHTML = `<div class="text-center p-4 bg-green-900/40 text-green-400 font-bold rounded-xl border border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.3)]">You are the highest bidder!</div>`;
+                        } else if (myClub.purse < p.currentBid + 0.5) {
+                            controls.innerHTML = `<div class="text-center p-4 bg-red-900/40 text-red-400 font-bold rounded-xl border border-red-500/50">Insufficient funds to bid.</div>`;
+                        } else if (myClub.slots >= myClub.maxSlots) {
+                            controls.innerHTML = `<div class="text-center p-4 bg-red-900/40 text-red-400 font-bold rounded-xl border border-red-500/50">Squad is full.</div>`;
+                        } else {
+                            controls.innerHTML = `
+                                <div class="grid grid-cols-4 gap-2 mb-2">
+                                    <button onclick="window.processBid(0.5)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded">+0.5</button>
+                                    <button onclick="window.processBid(1.0)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded">+1.0</button>
+                                    <button onclick="window.processBid(2.0)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded">+2.0</button>
+                                    <button onclick="window.processBid(5.0)" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded">+5.0</button>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="number" id="custom-bid-amount" step="0.5" placeholder="Custom Total (e.g. 15.5)" class="flex-grow bg-gray-800 border border-gray-600 rounded px-4 text-white font-bold text-center focus:outline-none focus:border-efootball-gold">
+                                    <button onclick="window.processCustomBid()" class="bg-efootball-gold hover:bg-yellow-400 text-black font-bold px-6 py-3 rounded">BID</button>
+                                </div>
+                            `;
+                        }
+                    } else {
+                         controls.innerHTML = `<div class="text-center p-4 bg-gray-800 rounded-xl text-gray-400 font-bold border border-gray-700">Bidding closed.</div>`;
+                    }
+                }
+            }
+        }
+
+        function renderClubDashboard() {
+            if (!currentUser || currentUser.role !== 'club') return;
+            const club = appData.clubs ? appData.clubs[currentUser.id] : null;
+            if (!club) return;
+
+            document.getElementById('dash-club-name').textContent = club.name;
+            document.getElementById('dash-club-purse').textContent = club.purse.toFixed(1) + ' 🪙';
+            document.getElementById('dash-club-slots').textContent = club.slots + ' / ' + club.maxSlots;
+            document.getElementById('dash-club-retentions').textContent = club.retentions + ' / 2';
+            document.getElementById('dash-club-t1').textContent = club.tokens.t1;
+            document.getElementById('dash-club-t2').textContent = club.tokens.t2;
+            document.getElementById('dash-club-t3').textContent = club.tokens.t3;
+
+            const banner = document.getElementById('dash-live-auction-banner');
+            if (appData.leaguePhase === 'MEGA_AUCTION') banner.classList.remove('hidden');
+            else banner.classList.add('hidden');
+
+            const squadList = document.getElementById('dash-squad-list');
+            if (squadList) {
+                const myPlayers = (appData.players || []).filter(p => p.owner === currentUser.id && p.status === 'SOLD');
+                if (myPlayers.length === 0) {
+                    squadList.innerHTML = '<li class="text-gray-500 italic text-sm">Squad is currently empty.</li>';
+                } else {
+                    let squadHtml = '';
+                    myPlayers.forEach(p => {
+                        squadHtml += `
+                            <li class="flex justify-between items-center bg-gray-900/50 p-3 rounded border border-gray-700">
+                                <span class="text-white font-bold flex items-center gap-2"><span class="w-8 text-center text-xs bg-gray-800 rounded py-1 text-gray-400">${p.pos}</span> ${p.name}</span>
+                                <span class="text-efootball-gold font-bold">${p.currentBid.toFixed(1)} 🪙</span>
+                            </li>
+                        `;
+                    });
+                    squadList.innerHTML = squadHtml;
+                }
+            }
+            
+            document.getElementById('dash-view-pitch-btn').onclick = () => window.openSquadPitch(currentUser.id);
+            lucide.createIcons();
+        }
+
+        function renderTransferMarket() {
+            const closedState = document.getElementById('tm-closed-state');
+            const openState = document.getElementById('tm-open-state');
+            
+            if (!appData.isTransferMarketActive) {
+                closedState.classList.remove('hidden');
+                openState.classList.add('hidden');
+                return;
+            }
+            
+            closedState.classList.add('hidden');
+            openState.classList.remove('hidden');
+
+            // Listings
+            const listingsGrid = document.getElementById('tm-listings-grid');
+            if (listingsGrid) {
+                let listingsHtml = '';
+                (appData.transferListings || []).forEach(listing => {
+                    const p = (appData.players || []).find(x => x.id === listing.playerId);
+                    if (!p) return;
+                    const seller = appData.clubs ? appData.clubs[listing.clubId] : null;
+                    if (!seller) return;
+                    
+                    let btn = '';
+                    if (currentUser?.role === 'club' && currentUser.id !== listing.clubId) {
+                        btn = `<button onclick="window.buyListedPlayer('${listing.id}')" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2 rounded mt-3">Buy for ${listing.price.toFixed(1)} 🪙</button>`;
+                    } else if (currentUser?.role === 'club' && currentUser.id === listing.clubId) {
+                        btn = `<button onclick="window.cancelListing('${listing.id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded mt-3">Cancel Listing</button>`;
+                    } else if (currentUser?.role === 'admin') {
+                        btn = `<button onclick="window.cancelListing('${listing.id}')" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2 rounded mt-3">Force Cancel</button>`;
+                    }
+                    
+                    listingsHtml += `
+                        <div class="glass-panel p-4 rounded-xl border border-gray-700 flex flex-col justify-between relative overflow-hidden">
+                            <div class="absolute top-0 right-0 bg-purple-600 text-xs font-bold px-2 py-1 rounded-bl">LISTED</div>
+                            <div>
+                                <div class="text-xs text-gray-400 mb-1">Seller: ${seller.name}</div>
+                                <h4 class="font-bold text-white text-lg">${p.name}</h4>
+                                <div class="text-sm font-bold text-blue-400 mb-2">${p.pos}</div>
+                                <div class="text-xl font-bold text-efootball-gold">${listing.price.toFixed(1)} 🪙</div>
+                            </div>
+                            ${btn}
+                        </div>
+                    `;
+                });
+                if ((appData.transferListings || []).length === 0) {
+                    listingsGrid.innerHTML = '<div class="col-span-full text-gray-500 italic text-center py-4">No players currently listed for sale.</div>';
+                } else {
+                    listingsGrid.innerHTML = listingsHtml;
+                }
+            }
+
+            // Unsold
+            const unsoldGrid = document.getElementById('tm-unsold-grid');
+            if (unsoldGrid) {
+                let unsoldHtml = '';
+                const unsoldPlayers = (appData.players || []).filter(p => p.status === 'UNSOLD');
+                unsoldPlayers.forEach(p => {
+                    let btn = '';
+                    if (currentUser?.role === 'club') {
+                        btn = `<button onclick="window.buyUnsold('${p.id}')" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded mt-3">Sign for Base Price</button>`;
+                    }
+                    unsoldHtml += `
+                        <div class="glass-panel p-4 rounded-xl border border-gray-700 flex flex-col justify-between">
+                            <div>
+                                <div class="text-xs text-red-400 mb-1 uppercase font-bold">Free Agent</div>
+                                <h4 class="font-bold text-white text-lg">${p.name}</h4>
+                                <div class="text-sm font-bold text-blue-400 mb-2">${p.pos}</div>
+                                <div class="text-xl font-bold text-gray-300">Base: ${p.basePrice.toFixed(1)} 🪙</div>
+                            </div>
+                            ${btn}
+                        </div>
+                    `;
+                });
+                if (unsoldPlayers.length === 0) {
+                    unsoldGrid.innerHTML = '<div class="col-span-full text-gray-500 italic text-center py-4">No unsold free agents available.</div>';
+                } else {
+                    unsoldGrid.innerHTML = unsoldHtml;
+                }
+            }
+
+            renderTradeRoom();
+            lucide.createIcons();
+        }
+
+        function renderTradeRoom() {
+            const tr = appData.tradeRoom;
+            const lobby = document.getElementById('tm-trade-lobby');
+            const active = document.getElementById('tm-trade-active');
+            const leaveBtn = document.getElementById('tm-trade-leave-btn');
+
+            if (!tr || (!tr.clubA && !tr.clubB)) {
+                active.classList.add('hidden');
+                leaveBtn.classList.add('hidden');
+                lobby.classList.remove('hidden');
+                lobby.innerHTML = `
+                    <i data-lucide="users" class="w-16 h-16 text-gray-600 mx-auto mb-4"></i>
+                    <h4 class="text-xl font-bold text-white mb-4">Trade Room is Empty</h4>
+                    ${currentUser?.role === 'club' ? `<button onclick="window.joinTradeRoom()" class="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-lg font-bold transition-colors">Create / Join Trade Session</button>` : '<p class="text-gray-500">Only clubs can initiate trades.</p>'}
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            lobby.classList.add('hidden');
+            active.classList.remove('hidden');
+            
+            const amIInRoom = currentUser?.role === 'club' && (tr.clubA === currentUser.id || tr.clubB === currentUser.id);
+            if (amIInRoom || currentUser?.role === 'admin') leaveBtn.classList.remove('hidden');
+            else leaveBtn.classList.add('hidden');
+
+            ['A', 'B'].forEach(side => {
+                const sideClubId = side === 'A' ? tr.clubA : tr.clubB;
+                const offerIds = side === 'A' ? tr.offerA : tr.offerB;
+                const money = side === 'A' ? tr.moneyA : tr.moneyB;
+                const isReady = side === 'A' ? tr.readyA : tr.readyB;
+                
+                const container = document.getElementById(`trade-side-${side.toLowerCase()}`);
+                
+                if (!sideClubId) {
+                    container.innerHTML = `
+                        <div class="h-full flex flex-col items-center justify-center text-center py-10">
+                            <div class="w-16 h-16 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center mb-4"><i data-lucide="user-plus" class="text-gray-600"></i></div>
+                            <h4 class="text-lg font-bold text-gray-500 mb-4">Waiting for Club...</h4>
+                            ${currentUser?.role === 'club' && !amIInRoom ? `<button onclick="window.joinTradeRoom()" class="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded font-bold transition-colors">Join as Side ${side}</button>` : ''}
+                        </div>
+                    `;
+                    return;
+                }
+
+                const club = appData.clubs ? appData.clubs[sideClubId] : null;
+                if(!club) return;
+                const isMySide = currentUser?.id === sideClubId;
+                const myPlayers = (appData.players || []).filter(p => p.owner === sideClubId && p.status === 'SOLD');
+                
+                let offerHTML = '';
+                offerIds.forEach(pid => {
+                    const p = (appData.players || []).find(x => x.id === pid);
+                    if(p) offerHTML += `
+                        <div class="bg-gray-800 border border-gray-600 p-2 rounded flex justify-between items-center mb-2">
+                            <span class="text-white text-sm font-bold">${p.name} <span class="text-gray-400 font-normal">(${p.pos})</span></span>
+                            ${isMySide && !isReady ? `<button onclick="window.removeFromTradeOffer('${pid}', '${side}')" class="text-red-400 hover:text-red-300"><i data-lucide="x-circle" class="w-4 h-4"></i></button>` : ''}
+                        </div>
+                    `;
+                });
+                if (offerIds.length === 0) offerHTML = '<div class="text-gray-500 text-sm italic mb-2">No players offered.</div>';
+
+                let controlsHTML = '';
+                if (isMySide && !isReady) {
+                    let options = '<option value="">-- Select Player --</option>';
+                    myPlayers.forEach(p => { if (!offerIds.includes(p.id)) options += `<option value="${p.id}">${p.name} (${p.pos})</option>`; });
+                    
+                    controlsHTML = `
+                        <div class="mt-4 pt-4 border-t border-gray-700">
+                            <div class="flex gap-2 mb-2">
+                                <select id="trade-select-${side}" class="flex-grow bg-gray-900 border border-gray-600 rounded px-2 py-1 text-white text-sm">${options}</select>
+                                <button onclick="window.addToTradeOffer('${side}')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm font-bold"><i data-lucide="plus"></i></button>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="number" id="trade-money-${side}" placeholder="Add 🪙" step="0.5" min="0" class="flex-grow bg-gray-900 border border-gray-600 rounded px-2 py-1 text-white text-sm">
+                                <button onclick="window.setTradeMoney('${side}')" class="bg-efootball-gold text-black px-3 py-1 rounded text-sm font-bold">Set</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = `
+                    ${isReady ? '<div class="absolute inset-0 border-4 border-green-500 rounded-xl pointer-events-none z-10"></div><div class="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded z-20">READY</div>' : ''}
+                    <div class="${isReady ? 'opacity-50 pointer-events-none' : ''}">
+                        <h4 class="text-xl font-bold text-white mb-1 flex items-center gap-2"><i data-lucide="shield" class="text-${club.color}-500"></i> ${club.name}</h4>
+                        <p class="text-xs text-gray-400 mb-4">Purse: ${club.purse.toFixed(1)} 🪙 | Slots: ${club.slots}/${club.maxSlots}</p>
+                        
+                        <div class="bg-gray-900/50 p-3 rounded border border-gray-700 min-h-[120px]">
+                            <h5 class="text-xs font-bold text-gray-400 uppercase mb-2">Offering:</h5>
+                            ${offerHTML}
+                            ${money > 0 ? `<div class="bg-yellow-900/30 border border-yellow-700 p-2 rounded text-efootball-gold font-bold text-sm text-center mt-2">+ ${money.toFixed(1)} 🪙</div>` : ''}
+                        </div>
+
+                        ${controlsHTML}
+                        
+                        ${isMySide ? `<button onclick="window.toggleTradeReady('${side}')" class="w-full mt-4 ${isReady ? 'bg-orange-600 hover:bg-orange-500' : 'bg-green-600 hover:bg-green-500'} text-white font-bold py-2 rounded transition-colors">${isReady ? 'CANCEL READY' : 'MARK AS READY'}</button>` : ''}
+                    </div>
+                `;
+            });
+            lucide.createIcons();
+        }
+
+        function renderPlayerPool() {
+            const tbody = document.getElementById('player-pool-table');
+            if (!tbody) return;
+            
+            const countsContainer = document.getElementById('player-counts-container');
+            if (countsContainer) {
+                const counts = { TOTAL: 0 };
+                const positions = ['CF', 'LWF', 'RWF', 'AMF', 'CMF', 'DMF', 'LMF', 'RMF', 'CB', 'LB', 'RB', 'GK'];
+                positions.forEach(pos => counts[pos] = 0);
+                
+                (appData.players || []).forEach(p => {
+                    counts.TOTAL++;
+                    if (counts[p.pos] !== undefined) counts[p.pos]++;
+                });
+
+                let countsHtml = `<div class="bg-blue-900/50 border border-blue-500 px-3 py-1 rounded-full text-xs font-bold text-white shadow"><span class="text-blue-200 mr-1">TOTAL:</span>${counts.TOTAL}</div>`;
+                positions.forEach(pos => {
+                    if (counts[pos] > 0) {
+                        countsHtml += `<div class="bg-gray-800 border border-gray-600 px-3 py-1 rounded-full text-xs font-bold text-white"><span class="text-gray-400 mr-1">${pos}:</span>${counts[pos]}</div>`;
+                    } else {
+                        countsHtml += `<div class="bg-gray-900 border border-gray-800 px-3 py-1 rounded-full text-xs font-bold text-gray-600"><span class="text-gray-700 mr-1">${pos}:</span>0</div>`;
+                    }
+                });
+                countsContainer.innerHTML = countsHtml;
+            }
+
+            const sortSelect = document.getElementById('pool-sort-by');
+            if(sortSelect) sortSelect.value = poolSort.by;
+            const filterSelect = document.getElementById('pool-filter-pos');
+            if(filterSelect) filterSelect.value = poolFilterPos;
+
+            let sorted = (appData.players || []).filter(p => poolFilterPos === 'ALL' || p.pos === poolFilterPos);
+            if (poolSort.by !== 'default') {
+                sorted.sort((a, b) => {
+                    let valA = a[poolSort.by]; let valB = b[poolSort.by];
+                    if (valA < valB) return poolSort.asc ? -1 : 1;
+                    if (valA > valB) return poolSort.asc ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            let poolHtml = '';
+            sorted.forEach(p => {
+                let statusBadge = `<span class="bg-gray-800 text-gray-300 px-2 py-1 rounded text-xs font-bold border border-gray-700">${p.status}</span>`;
+                if (p.status === 'SOLD') statusBadge = `<span class="bg-blue-900/50 text-blue-300 px-2 py-1 rounded text-xs font-bold border border-blue-800/50">SOLD TO ${appData.clubs && appData.clubs[p.owner] ? appData.clubs[p.owner].name.toUpperCase() : 'UNKNOWN'}</span>`;
+                if (p.status === 'ACTIVE' || p.status === 'ON_BLOCK') statusBadge = `<span class="bg-red-900/50 text-red-400 px-2 py-1 rounded text-xs font-bold border border-red-800/50 animate-pulse">ON STAGE</span>`;
+                if (p.status === 'UNSOLD') statusBadge = `<span class="bg-red-900/30 text-red-500 px-2 py-1 rounded text-xs font-bold border border-red-900/50">UNSOLD</span>`;
+
+                poolHtml += `
+                    <tr class="border-b border-gray-800 hover:bg-gray-900/30 transition-colors">
+                        <td class="px-6 py-4 font-bold text-white">${p.name}</td>
+                        <td class="px-6 py-4 text-center"><span class="bg-gray-800 px-2 py-1 rounded text-xs text-gray-400">${p.pos}</span></td>
+                        <td class="px-6 py-4 text-center font-mono text-gray-300">${p.basePrice.toFixed(1)}</td>
+                        <td class="px-6 py-4 text-right">${statusBadge}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = poolHtml;
+        }
+
+        function renderClubsInfo() {
+            const grid = document.getElementById('clubs-info-grid');
+            if (!grid) return;
+            
+            let gridHtml = '';
+            Object.values(appData.clubs || {}).sort((a,b) => b.purse - a.purse).forEach(club => {
+                const clubColorHex = colorMap[club.color] || '#3b82f6';
+                const clubKey = Object.keys(appData.clubs).find(k => appData.clubs[k] === club);
+                
+                gridHtml += `
+                    <div class="glass-panel p-6 rounded-2xl border-t-4" style="border-top-color: ${clubColorHex};">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-heading font-bold text-xl text-white truncate pr-2">${club.name}</h3>
+                            <div class="w-8 h-8 rounded-full shadow border-2 border-gray-700 flex-shrink-0" style="background-color: ${clubColorHex};"></div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center bg-gray-900/50 p-2 rounded">
+                                <span class="text-xs text-gray-400 font-bold uppercase">Purse</span>
+                                <span class="font-bold text-efootball-gold text-lg">${club.purse.toFixed(1)} 🪙</span>
+                            </div>
+                            <div class="flex justify-between items-center bg-gray-900/50 p-2 rounded">
+                                <span class="text-xs text-gray-400 font-bold uppercase">Slots Used</span>
+                                <span class="font-bold text-white">${club.slots} <span class="text-gray-500 text-xs">/ ${club.maxSlots}</span></span>
+                            </div>
+                            <div class="grid grid-cols-3 gap-1 mt-2 text-center">
+                                <div class="bg-gray-900/50 rounded p-1 border border-yellow-500/30">
+                                    <span class="block text-[10px] text-gray-500">T1</span>
+                                    <span class="text-yellow-400 font-bold">${club.tokens.t1}</span>
+                                </div>
+                                <div class="bg-gray-900/50 rounded p-1 border border-gray-400/30">
+                                    <span class="block text-[10px] text-gray-500">T2</span>
+                                    <span class="text-gray-300 font-bold">${club.tokens.t2}</span>
+                                </div>
+                                <div class="bg-gray-900/50 rounded p-1 border border-orange-500/30">
+                                    <span class="block text-[10px] text-gray-500">T3</span>
+                                    <span class="text-orange-400 font-bold">${club.tokens.t3}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="window.openSquadPitch('${clubKey}')" class="w-full mt-4 bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 rounded transition-colors text-sm flex justify-center items-center gap-2">
+                            <i data-lucide="monitor-play" class="w-4 h-4"></i> View Squad
+                        </button>
+                    </div>
+                `;
+            });
+            grid.innerHTML = gridHtml;
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        //  REMAINING HELPER / MODAL FUNCTIONS
+        // ==========================================
+
+        function normalizePlayerName(name) {
+            return name.replace(/[^A-Z0-9]/gi, '').toUpperCase();
+        }
+
+        window.handleAddPlayer = async function(e) {
+            e.preventDefault();
+            const rawName = document.getElementById('add-p-name').value.toUpperCase().trim();
+            const normalizedName = normalizePlayerName(rawName);
+            
+            const exists = (appData.players || []).some(p => normalizePlayerName(p.name) === normalizedName);
+            if (exists) return window.showToast("Player already exists in the database!", "error");
+
+            const newPlayer = {
+                id: 'p' + Date.now(),
+                name: rawName,
+                pos: document.getElementById('add-p-pos').value,
+                basePrice: 0, currentBid: 0, highestBidder: null, status: 'WAITING', owner: null
+            };
+            try {
+                await safeUpdate(data => { data.players.push(newPlayer); });
+                e.target.reset();
+                window.showToast(`${newPlayer.name} added!`);
+            } catch(err) {}
+        };
+
+        window.openBulkAddModal = function() { document.getElementById('bulk-add-player-modal').classList.remove('hidden'); };
+
+        window.processBulkAdd = async function(e) {
+            e.preventDefault();
+            const rawData = document.getElementById('bulk-player-data').value.trim();
+            if(!rawData) return window.showToast("No data provided.", "error");
+            
+            const lines = rawData.split('\n');
+            const newPlayers = [];
+            let duplicatesSkipped = 0;
+
+            const existingNames = new Set((appData.players || []).map(p => normalizePlayerName(p.name)));
+
+            for(let i=0; i<lines.length; i++) {
+                const line = lines[i].trim();
+                if(!line || line.toLowerCase().startsWith('name')) continue; 
+                
+                let parsedName = '';
+                let parsedPos = '';
+
+                const parenMatch = line.match(/^(?:\d+[\.\-\s]*)?(.*?)\s*\(\s*([a-zA-Z]+)\s*\)\s*$/);
+                
+                if (parenMatch) {
+                    parsedName = parenMatch[1].trim().toUpperCase();
+                    parsedPos = parenMatch[2].trim().toUpperCase();
+                } else if (line.includes(',')) {
+                    const parts = line.split(',');
+                    if (parts.length >= 2) {
+                        let rawName = parts[0].trim();
+                        const nameMatch = rawName.match(/^(?:\d+[\.\-\s]*)?(.*)$/);
+                        parsedName = nameMatch ? nameMatch[1].trim().toUpperCase() : rawName.toUpperCase();
+                        parsedPos = parts[1].trim().toUpperCase();
+                    }
+                }
+
+                if(parsedName && parsedPos) {
+                    const normalizedParsedName = normalizePlayerName(parsedName);
+                    
+                    if(existingNames.has(normalizedParsedName)) {
+                        duplicatesSkipped++;
+                        continue; 
+                    }
+                    
+                    existingNames.add(normalizedParsedName); 
+
+                    newPlayers.push({
+                        id: 'p' + Date.now() + Math.floor(Math.random()*1000) + i,
+                        name: parsedName, 
+                        pos: parsedPos,
+                        basePrice: 0, currentBid: 0, highestBidder: null, status: 'WAITING', owner: null
+                    });
+                }
+            }
+
+            if(newPlayers.length === 0 && duplicatesSkipped > 0) return window.showToast(`All players were duplicates and discarded by the system.`, "error");
+            if(newPlayers.length === 0) return window.showToast("No valid players found.", "error");
+
+            try {
+                await safeUpdate(data => { data.players = [...(data.players || []), ...newPlayers]; });
+                document.getElementById('bulk-add-player-modal').classList.add('hidden');
+                document.getElementById('bulk-player-data').value = '';
+                
+                const dupMsg = duplicatesSkipped > 0 ? ` (${duplicatesSkipped} duplicates discarded)` : '';
+                window.showToast(`${newPlayers.length} players imported!${dupMsg}`);
+            } catch(err) { window.showToast("Error importing players.", "error"); }
+        };
+
+        window.openDeletePlayerConfirm = function(playerId) {
+            const p = (appData.players || []).find(x => x.id === playerId);
+            if (!p) return;
+            document.getElementById('del-player-id').value = playerId;
+            document.getElementById('del-player-name-span').textContent = p.name;
+            document.getElementById('delete-player-confirm-modal').classList.remove('hidden');
+        };
+
+        window.executeDeletePlayer = async function() {
+            document.getElementById('delete-player-confirm-modal').classList.add('hidden');
+            const pid = document.getElementById('del-player-id').value;
+            if (!pid) return;
+
+            try {
+                await safeUpdate(data => {
+                    const pIndex = data.players.findIndex(x => x.id === pid);
+                    if (pIndex === -1) throw "Player not found.";
+                    const p = data.players[pIndex];
+
+                    if (p.status === 'SOLD' && p.owner && data.clubs[p.owner]) {
+                        data.clubs[p.owner].purse += p.currentBid;
+                        data.clubs[p.owner].slots -= 1;
+                    }
+
+                    if (data.activePlayerId === pid) {
+                        data.activePlayerId = null;
+                        data.leaguePhase = 'PRE_SEASON';
+                    }
+
+                    if (data.tradeRoom) {
+                        data.tradeRoom.offerA = data.tradeRoom.offerA.filter(id => id !== pid);
+                        data.tradeRoom.offerB = data.tradeRoom.offerB.filter(id => id !== pid);
+                    }
+
+                    if (data.transferListings) {
+                        data.transferListings = data.transferListings.filter(l => l.playerId !== pid);
+                    }
+
+                    data.players.splice(pIndex, 1);
+                });
+                window.showToast("Player permanently deleted.");
+            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error deleting player.", "error"); }
+        };
+
+        window.openEditModal = function(clubId) {
+            document.getElementById('edit-club-id').value = clubId;
+            document.getElementById('edit-club-name').textContent = appData.clubs[clubId].name;
+            document.getElementById('edit-club-pwd').value = appData.clubs[clubId].pwd;
+            document.getElementById('edit-club-purse').value = appData.clubs[clubId].purse;
+            document.getElementById('edit-club-slots').value = appData.clubs[clubId].slots;
+            document.getElementById('edit-club-retentions').value = appData.clubs[clubId].retentions;
+            document.getElementById('edit-club-t1').value = appData.clubs[clubId].tokens.t1;
+            document.getElementById('edit-club-t2').value = appData.clubs[clubId].tokens.t2;
+            document.getElementById('edit-club-t3').value = appData.clubs[clubId].tokens.t3;
+            
+            const rosterContainer = document.getElementById('edit-club-roster');
+            rosterContainer.innerHTML = '';
+            const myPlayers = (appData.players || []).filter(p => p.owner === clubId && p.status === 'SOLD');
+            if(myPlayers.length === 0) {
+                rosterContainer.innerHTML = '<li class="text-xs text-gray-500 italic">No players in squad.</li>';
+            } else {
+                myPlayers.forEach(p => {
+                    rosterContainer.innerHTML += `
+                        <li class="flex justify-between items-center bg-gray-800 p-2 rounded border border-gray-700 text-xs">
+                            <span class="text-white font-bold">${p.name} <span class="text-gray-400 font-normal">(${p.currentBid.toFixed(1)} 🪙)</span></span>
+                            <button type="button" onclick="window.revokePlayerSale('${p.id}', '${clubId}')" class="bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded transition-colors font-bold">Drop</button>
+                        </li>
+                    `;
+                });
+            }
+            document.getElementById('edit-club-modal').classList.remove('hidden');
+        };
+
+        window.saveClubEdits = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-club-id').value;
+            try {
+                await safeUpdate(data => {
+                    data.clubs[id].pwd = document.getElementById('edit-club-pwd').value;
+                    data.clubs[id].purse = parseFloat(document.getElementById('edit-club-purse').value);
+                    data.clubs[id].slots = parseInt(document.getElementById('edit-club-slots').value);
+                    data.clubs[id].retentions = parseInt(document.getElementById('edit-club-retentions').value);
+                    data.clubs[id].tokens.t1 = parseInt(document.getElementById('edit-club-t1').value);
+                    data.clubs[id].tokens.t2 = parseInt(document.getElementById('edit-club-t2').value);
+                    data.clubs[id].tokens.t3 = parseInt(document.getElementById('edit-club-t3').value);
+                });
+                document.getElementById('edit-club-modal').classList.add('hidden');
+                window.showToast('Club updated.');
+            } catch(e) {}
+        };
+
+        window.openAssignModal = function(playerId) {
+            const p = (appData.players || []).find(x => x.id === playerId);
+            if (!p) return;
+            document.getElementById('assign-player-id').value = p.id;
+            document.getElementById('assign-player-name').textContent = p.name;
+            document.getElementById('assign-price').value = p.basePrice;
+
+            const select = document.getElementById('assign-club-select');
+            select.innerHTML = '<option value="">-- Choose Club --</option>';
+            for(const [id, club] of Object.entries(appData.clubs || {})) {
+                select.innerHTML += `<option value="${id}">${club.name} (Purse: ${club.purse.toFixed(1)} 🪙, Slots: ${club.slots}/${club.maxSlots})</option>`;
+            }
+            document.getElementById('assign-player-modal').classList.remove('hidden');
+        };
+
+        window.submitAssignPlayer = async function(e) {
+            e.preventDefault();
+            const playerId = document.getElementById('assign-player-id').value;
+            const clubId = document.getElementById('assign-club-select').value;
+            const price = parseFloat(document.getElementById('assign-price').value);
+
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === playerId);
+                    if (!p) throw "Player not found.";
+                    if (p.status === 'SOLD') throw "Player already sold.";
+
+                    const club = data.clubs[clubId];
+                    if (price > club.purse) throw "Club has insufficient funds!";
+                    if (club.slots >= club.maxSlots) throw "Club squad is full!";
+
+                    club.purse -= price;
+                    club.slots += 1;
+                    p.status = 'SOLD';
+                    p.owner = clubId;
+                    p.currentBid = price;
+                    p.highestBidder = clubId;
+
+                    data.auctionLogs = data.auctionLogs || [];
+                    data.auctionLogs.unshift({
+                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+                        msg: `Admin assigned ${p.name} to ${club.name} for ${price.toFixed(1)} 🪙.`,
+                        type: 'success'
+                    });
+
+                    if (data.activePlayerId === playerId) {
+                        data.activePlayerId = null;
+                        data.leaguePhase = 'PRE_SEASON';
+                    }
+
+                    if(data.transferListings) data.transferListings = data.transferListings.filter(l => l.playerId !== playerId);
+                });
+                document.getElementById('assign-player-modal').classList.add('hidden');
+                window.showToast("Player successfully assigned!");
+            } catch (err) { window.showToast(typeof err === 'string' ? err : "Error assigning player.", "error"); }
+        };
+
+        window.openEditPlayerModal = function(playerId) {
+            const p = (appData.players || []).find(x => x.id === playerId);
+            if (!p) return;
+            document.getElementById('edit-p-id').value = p.id;
+            document.getElementById('edit-p-name').value = p.name;
+            document.getElementById('edit-p-pos').value = p.pos;
+            document.getElementById('edit-p-price').value = p.basePrice;
+            document.getElementById('edit-player-modal').classList.remove('hidden');
+        };
+
+        window.submitEditPlayer = async function(e) {
+            e.preventDefault();
+            const playerId = document.getElementById('edit-p-id').value;
+            const newName = document.getElementById('edit-p-name').value.toUpperCase();
+            const newPos = document.getElementById('edit-p-pos').value;
+            const newPrice = parseFloat(document.getElementById('edit-p-price').value);
+
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === playerId);
+                    if (!p) throw "Player not found.";
+                    if (p.status === 'SOLD') throw "Cannot edit sold players.";
+                    if (p.status === 'ACTIVE') throw "Cannot edit currently active player.";
+
+                    p.name = newName; p.pos = newPos; p.basePrice = newPrice;
+                    if (p.status === 'WAITING' || p.status === 'UNSOLD' || p.status === 'ON_BLOCK') p.currentBid = newPrice;
+                });
+                document.getElementById('edit-player-modal').classList.add('hidden');
+                window.showToast("Player details updated!");
+            } catch (err) { window.showToast(typeof err === 'string' ? err : "Error updating player.", "error"); }
+        };
+
+        window.openAddClubModal = function() { document.getElementById('add-club-modal').classList.remove('hidden'); };
+
+        window.submitAddClub = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('add-club-id').value.toLowerCase().trim();
+            const name = document.getElementById('add-club-name').value.trim();
+            const color = document.getElementById('add-club-color').value;
+            const pwd = document.getElementById('add-club-pwd').value;
+            if (appData.clubs[id]) return window.showToast("Club ID already exists!", "error");
+
+            try {
+                await safeUpdate(data => {
+                    if (data.clubs[id]) throw "Club ID already exists!";
+                    data.clubs[id] = { name: name, color: color, purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: pwd };
+                });
+                document.getElementById('add-club-modal').classList.add('hidden');
+                e.target.reset();
+                window.showToast("Club added successfully!");
+            } catch(err) { window.showToast(typeof err === 'string' ? err : "Error adding club", "error"); }
+        };
+
+        window.revokePlayerSale = async function(playerId, clubId) {
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === playerId);
+                    if (!p || p.status !== 'SOLD' || p.owner !== clubId) throw "Player is not sold to this club!";
+                    const ownerClub = data.clubs[clubId];
+
+                    ownerClub.purse += p.currentBid;
+                    ownerClub.slots -= 1;
+
+                    data.auctionLogs = data.auctionLogs || [];
+                    data.auctionLogs.unshift({
+                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+                        msg: `Admin revoked sale of ${p.name}. ${ownerClub.name} refunded ${p.currentBid.toFixed(1)} 🪙.`,
+                        type: 'info'
+                    });
+
+                    p.status = 'WAITING'; p.owner = null; p.currentBid = p.basePrice; p.highestBidder = null;
+                    if(data.transferListings) data.transferListings = data.transferListings.filter(l => l.playerId !== playerId);
+                });
+                document.getElementById('edit-club-modal').classList.add('hidden');
+                window.showToast("Player returned to pool & Club refunded!");
+            } catch (e) { window.showToast(typeof e === 'string' ? e : "Error revoking sale.", "error"); }
+        };
+
+        window.openSquadPitch = function(clubId) {
+            currentPitchClubId = clubId;
+            document.getElementById('pitch-formation-select').value = '4-3-3';
+            renderPitch();
+        };
+        
+        window.changePitchFormation = function() { renderPitch(); };
+        
+        function renderPitch() {
+            const clubId = currentPitchClubId;
+            if (!clubId) return;
+            const club = appData.clubs ? appData.clubs[clubId] : null;
+            if (!club) return;
+            
+            document.getElementById('pitch-club-name').textContent = club.name + " SQUAD";
+            document.getElementById('capture-club-title').textContent = club.name;
+
+            const myPlayers = (appData.players || []).filter(p => p.owner === clubId && p.status === 'SOLD');
+            const posOrder = { 'GK':1, 'CB':2, 'LB':3, 'RB':4, 'DMF':5, 'CMF':6, 'LMF':7, 'RMF':8, 'AMF':9, 'LWF':10, 'RWF':11, 'SS':11.5, 'CF':12 };
+            myPlayers.sort((a, b) => {
+                const poA = posOrder[a.pos] || 99; const poB = posOrder[b.pos] || 99;
+                if (poA !== poB) return poA - poB;
+                return b.currentBid - a.currentBid; 
+            });
+
+            const pitchContainer = document.getElementById('pitch-players-container');
+            const subsContainer = document.getElementById('pitch-subs-container');
+            pitchContainer.innerHTML = ''; subsContainer.innerHTML = '';
+
+            const formation = document.getElementById('pitch-formation-select').value;
+            const positions = formations[formation] || formations['4-3-3'];
+            const clubColorHex = colorMap[club.color] || '#3b82f6';
+
+            for (let i = 0; i < myPlayers.length; i++) {
+                const p = myPlayers[i];
+                let nodeHTML = `<div class="flex flex-col items-center justify-center">
+                        <div class="w-8 h-8 rounded-full border-2 border-white flex items-center justify-center shadow-lg text-[10px] font-bold text-white mb-0.5" style="background-color: ${clubColorHex};">${p.pos}</div>
+                        <div class="bg-black/80 px-2 py-0.5 rounded text-white text-[10px] font-bold text-center whitespace-nowrap truncate max-w-[80px]">${p.name}</div>
+                    </div>`;
+
+                if (i < 11) {
+                    const posNode = document.createElement('div');
+                    posNode.className = 'absolute transform -translate-x-1/2 -translate-y-1/2 z-10 transition-all duration-500';
+                    posNode.style.top = positions[i].top; posNode.style.left = positions[i].left;
+                    posNode.innerHTML = nodeHTML;
+                    pitchContainer.appendChild(posNode);
+                } else {
+                    const benchNode = document.createElement('div');
+                    benchNode.className = 'flex flex-col items-center justify-center bg-gray-800 p-2 rounded border border-gray-600 min-w-[80px] shadow';
+                    benchNode.innerHTML = `<span class="text-[10px] text-gray-400 font-bold">${p.pos}</span><span class="text-xs text-white font-bold truncate max-w-[75px]">${p.name}</span>`;
+                    subsContainer.appendChild(benchNode);
+                }
+            }
+            if (myPlayers.length === 0) pitchContainer.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-white/50 font-bold text-xl">SQUAD IS EMPTY</div>';
+            document.getElementById('squad-pitch-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        window.closeSquadPitch = function() { document.getElementById('squad-pitch-modal').classList.add('hidden'); };
+
+        window.downloadPitchImage = function() {
+            const captureArea = document.getElementById('capture-pitch-area');
+            const clubName = document.getElementById('capture-club-title').textContent.replace(/\s+/g, '_');
+            window.showToast('Generating screenshot...', 'info');
+            html2canvas(captureArea, { backgroundColor: '#0f172a', scale: 2 }).then(canvas => {
+                const link = document.createElement('a'); link.download = `${clubName}_Squad.png`; link.href = canvas.toDataURL('image/png'); link.click();
+            }).catch(err => { window.showToast('Failed to capture screenshot.', 'error'); });
+        };
+
+        window.openTransferListingModal = function() {
+            if(!currentUser || currentUser.role !== 'club') return;
+            const select = document.getElementById('list-p-select');
+            select.innerHTML = '<option value="">-- Select Player --</option>';
+
+            const myPlayers = (appData.players || []).filter(p => p.owner === currentUser.id && p.status === 'SOLD');
+            const currentlyListed = (appData.transferListings || []).map(l => l.playerId);
+            let hasUnlisted = false;
+            myPlayers.forEach(p => {
+                if(!currentlyListed.includes(p.id)) { select.innerHTML += `<option value="${p.id}">${p.name} (${p.pos})</option>`; hasUnlisted = true; }
+            });
+            if(!hasUnlisted) return window.showToast("You have no unlisted players available.", "error");
+
+            document.getElementById('list-p-price').value = '';
+            document.getElementById('transfer-list-modal').classList.remove('hidden');
+        };
+
+        window.submitTransferListing = async function(e) {
+            e.preventDefault();
+            const pid = document.getElementById('list-p-select').value;
+            const price = parseFloat(document.getElementById('list-p-price').value);
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === pid);
+                    if(!p || p.owner !== currentUser.id) throw "Invalid player.";
+                    if((data.transferListings || []).find(x => x.playerId === pid)) throw "Player already listed.";
+                    data.transferListings = data.transferListings || [];
+                    data.transferListings.push({ id: 'list_' + Date.now(), clubId: currentUser.id, playerId: pid, price: price });
+                });
+                document.getElementById('transfer-list-modal').classList.add('hidden');
+                window.showToast("Player listed on Transfer Market!");
+                window.switchView('page-transfer-market');
+            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error listing player.", "error"); }
+        };
+
+        window.cancelListing = async function(listingId) {
+            try {
+                await safeUpdate(data => {
+                    const listingIndex = (data.transferListings || []).findIndex(x => x.id === listingId);
+                    if(listingIndex === -1) throw "Listing not found.";
+                    const listing = data.transferListings[listingIndex];
+                    if(listing.clubId !== currentUser.id && currentUser.role !== 'admin') throw "Unauthorized.";
+                    data.transferListings.splice(listingIndex, 1);
+                });
+                window.showToast("Listing cancelled.");
+            } catch(e) {}
+        };
+
+        window.buyListedPlayer = async function(listingId) {
+            if (!appData.isTransferMarketActive) return window.showToast('Transfer Market is currently paused!', 'error');
+            if(!currentUser || currentUser.role !== 'club') return;
+            try {
+                await safeUpdate(data => {
+                    const listingIndex = (data.transferListings||[]).findIndex(x => x.id === listingId);
+                    if(listingIndex === -1) throw "Listing no longer available.";
+                    const listing = data.transferListings[listingIndex];
+                    if(listing.clubId === currentUser.id) throw "You cannot buy your own player.";
+
+                    const p = data.players.find(x => x.id === listing.playerId);
+                    const seller = data.clubs[listing.clubId];
+                    const buyer = data.clubs[currentUser.id];
+
+                    if(buyer.purse < listing.price) throw "Insufficient funds!";
+                    if(buyer.slots >= buyer.maxSlots) throw "Squad full!";
+
+                    buyer.purse -= listing.price; buyer.slots += 1;
+                    seller.purse += listing.price; seller.slots -= 1;
+                    p.owner = currentUser.id; p.currentBid = listing.price;
+                    data.transferListings.splice(listingIndex, 1);
+
+                    if(data.tradeRoom) {
+                        data.tradeRoom.offerA = data.tradeRoom.offerA.filter(id => id !== p.id);
+                        data.tradeRoom.offerB = data.tradeRoom.offerB.filter(id => id !== p.id);
+                        data.tradeRoom.readyA = false; data.tradeRoom.readyB = false;
+                    }
+
+                    data.auctionLogs = data.auctionLogs || [];
+                    data.auctionLogs.unshift({
+                        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}),
+                        msg: `TRANSFER: ${buyer.name} bought ${p.name} from ${seller.name} for ${listing.price.toFixed(1)} 🪙`,
+                        type: 'success'
+                    });
+                });
+                window.showToast("Player signed successfully!");
+            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error buying player.", "error"); }
+        };
+
+        window.buyUnsold = async function(playerId) {
+            if (!appData.isTransferMarketActive) return window.showToast('Transfer Market is currently paused!', 'error');
+            if(!currentUser || currentUser.role !== 'club') return window.showToast('Log in as club to buy', 'error');
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === playerId);
+                    if (!p || p.status !== 'UNSOLD') throw "Player no longer available.";
+                    const myClub = data.clubs[currentUser.id];
+                    if (p.basePrice > myClub.purse) throw "Insufficient funds!";
+                    if (myClub.slots >= myClub.maxSlots) throw "Squad full!";
+                    myClub.purse -= p.basePrice; myClub.slots += 1; p.status = 'SOLD'; p.owner = currentUser.id;
+                });
+                window.showToast(`Signed successfully!`);
+            } catch (e) { window.showToast(typeof e === 'string' ? e : "Error during transfer.", "error"); }
+        };
+
+        window.putPlayerOnBlock = async function(playerId) {
+            if (appData.activePlayerId) {
+                const old = appData.players.find(x => x.id === appData.activePlayerId);
+                if (old && (old.status === 'ON_BLOCK' || old.status === 'ACTIVE')) old.status = 'WAITING';
+            }
+            const localP = appData.players.find(x => x.id === playerId);
+            if (localP) {
+                localP.status = 'ON_BLOCK'; 
+                appData.activePlayerId = playerId; 
+                appData.leaguePhase = 'MEGA_AUCTION';
+                reRenderActiveViews();
+            }
+            window.switchView('page-mega-auction');
+
+            try {
+                await safeUpdate(data => {
+                    if (data.activePlayerId) {
+                        const old = data.players.find(x => x.id === data.activePlayerId);
+                        if (old && (old.status === 'ON_BLOCK' || old.status === 'ACTIVE')) old.status = 'WAITING';
+                    }
+                    const p = data.players.find(x => x.id === playerId);
+                    if (p) {
+                        p.status = 'ON_BLOCK'; data.activePlayerId = playerId; data.leaguePhase = 'MEGA_AUCTION';
+                        data.auctionLogs = data.auctionLogs || [];
+                        data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `Admin called ${p.name} to the auction floor.`, type: 'info' });
+                    }
+                });
+                window.showToast("Player pushed to Stage!");
+            } catch (e) { window.showToast("Error updating stage.", "error"); }
+        };
+
+        window.reAuctionPlayer = async function(playerId) {
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === playerId);
+                    if(p && p.status === 'UNSOLD') p.status = 'WAITING';
+                });
+                window.showToast("Player returned to Auction Queue!");
+            } catch (e) { window.showToast("Error updating player.", "error"); }
+        };
+
+        window.startBidding = async function() {
+            const localP = appData.players.find(x => x.id === appData.activePlayerId);
+            if (localP && localP.status === 'ON_BLOCK') {
+                localP.status = 'ACTIVE';
+                reRenderActiveViews();
+            }
+
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === data.activePlayerId);
+                    if (p && p.status === 'ON_BLOCK') {
+                        p.status = 'ACTIVE';
+                        data.auctionLogs = data.auctionLogs || [];
+                        data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `Bidding is now OPEN for ${p.name}!`, type: 'success' });
+                    } else if (p && p.status === 'ACTIVE') {
+                        return;
+                    } else {
+                        throw "Player is already active or not found.";
+                    }
+                });
+                window.showToast("Bidding is now OPEN!", "success");
+            } catch (e) { window.showToast(typeof e === 'string' ? e : "Error starting bidding", "error"); }
+        };
+
+        window.processBid = async function(amount, isIncrement = true) {
+            if (isProcessingBid) return;
+            if (!appData.activePlayerId || currentUser?.role !== 'club') return;
+            
+            const localP = appData.players.find(x => x.id === appData.activePlayerId);
+            if (!localP || localP.status !== 'ACTIVE') return window.showToast("Player no longer active!", "error");
+            
+            const intendedBid = isIncrement ? localP.currentBid + amount : amount;
+            if (intendedBid <= localP.currentBid) return window.showToast("Bid must be strictly higher than current bid!", "error");
+            if ((Math.round(intendedBid * 10)) % 5 !== 0) return window.showToast("Bid amount must be a multiple of 0.5 🪙!", "error");
+            
+            const myClub = appData.clubs[currentUser.id];
+            if (intendedBid > myClub.purse) return window.showToast("Insufficient funds!", "error");
+            if (myClub.slots >= myClub.maxSlots) return window.showToast("Squad full!", "error");
+
+            isProcessingBid = true; 
+            
+            localP.currentBid = intendedBid;
+            localP.highestBidder = currentUser.id;
+            reRenderActiveViews();
+
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === data.activePlayerId);
+                    if (!p || p.status !== 'ACTIVE') throw "Player no longer active!";
+                    
+                    const newServerBid = isIncrement ? p.currentBid + amount : amount;
+                    
+                    if (newServerBid <= p.currentBid) throw "A higher bid was already placed!";
+                    if ((Math.round(newServerBid * 10)) % 5 !== 0) throw "Bid amount must be a multiple of 0.5 🪙!";
+                    
+                    const serverClub = data.clubs[currentUser.id];
+                    if (newServerBid > serverClub.purse) throw "Insufficient funds!";
+                    if (serverClub.slots >= serverClub.maxSlots) throw "Squad full!";
+                    
+                    p.currentBid = newServerBid; 
+                    p.highestBidder = currentUser.id;
+                    
+                    data.auctionLogs = data.auctionLogs || [];
+                    data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `${serverClub.name} bid ${newServerBid.toFixed(1)} 🪙`, type: 'info' });
+                });
+            } catch (e) { 
+                window.showToast(typeof e === 'string' ? e : "Bid rejected. Try again!", "error"); 
+            }
+            
+            setTimeout(() => { isProcessingBid = false; }, 250); 
+        };
+
+        window.processCustomBid = function() {
+            const el = document.getElementById('custom-bid-amount');
+            if(!el || !el.value) return window.showToast("Enter a valid amount", "error");
+            const val = parseFloat(el.value);
+            if(isNaN(val)) return window.showToast("Invalid amount", "error");
+            window.processBid(val, false);
+            el.value = '';
+        };
+
+        window.adminFinalizeAuction = async function(playerId) {
+            const localP = appData.players.find(x => x.id === playerId);
+            if (localP) {
+                if (localP.highestBidder) {
+                    localP.status = 'SOLD'; localP.owner = localP.highestBidder;
+                } else {
+                    localP.status = 'UNSOLD';
+                }
+                appData.activePlayerId = null;
+                reRenderActiveViews();
+            }
+
+            try {
+                await safeUpdate(data => {
+                    const p = data.players.find(x => x.id === playerId);
+                    if (!p || p.status !== 'ACTIVE') throw "Player no longer active!";
+                    if (p.highestBidder) {
+                        p.status = 'SOLD'; p.owner = p.highestBidder;
+                        data.clubs[p.highestBidder].purse -= p.currentBid; data.clubs[p.highestBidder].slots += 1;
+                        data.auctionLogs = data.auctionLogs || [];
+                        data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `${p.name} SOLD to ${data.clubs[p.highestBidder].name} for ${p.currentBid.toFixed(1)} 🪙!`, type: 'success' });
+                    } else {
+                        p.status = 'UNSOLD';
+                        data.auctionLogs = data.auctionLogs || [];
+                        data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: `${p.name} went UNSOLD.`, type: 'error' });
+                    }
+                    data.activePlayerId = null;
+                });
+                window.showToast("Auction finalized!");
+            } catch (e) { window.showToast(typeof e === 'string' ? e : "Error finalizing.", "error"); }
+        };
+
+        window.joinTradeRoom = async function() {
+            if (isProcessingTrade) return;
+            if (!currentUser || currentUser.role !== 'club') return window.showToast("Only clubs can trade.", "error");
+            isProcessingTrade = true;
+            try {
+                await safeUpdate(data => {
+                    const tr = data.tradeRoom || { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false };
+                    if (tr.clubA === currentUser.id || tr.clubB === currentUser.id) throw "You are already in the room!";
+                    if (!tr.clubA) tr.clubA = currentUser.id;
+                    else if (!tr.clubB) tr.clubB = currentUser.id;
+                    else throw "Trade room is full!";
+                    data.tradeRoom = tr;
+                });
+            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error joining room", "error"); }
+            isProcessingTrade = false;
+        };
+
+        window.leaveTradeRoom = async function() {
+            if (isProcessingTrade) return;
+            isProcessingTrade = true;
+            try {
+                await safeUpdate(data => { data.tradeRoom = { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false }; });
+                window.showToast("Trade Session closed.");
+            } catch(e) { window.showToast("Error leaving room", "error"); }
+            isProcessingTrade = false;
+        };
+
+        window.addToTradeOffer = async function(side) {
+            const selectEl = document.getElementById(`trade-select-${side}`);
+            if (!selectEl || !selectEl.value) return;
+            const pid = selectEl.value;
+            try {
+                await safeUpdate(data => {
+                    const tr = data.tradeRoom;
+                    if (side === 'A' && !tr.offerA.includes(pid)) tr.offerA.push(pid);
+                    if (side === 'B' && !tr.offerB.includes(pid)) tr.offerB.push(pid);
+                    tr.readyA = false; tr.readyB = false;
+                });
+            } catch(e) {}
+        };
+
+        window.removeFromTradeOffer = async function(pid, side) {
+            try {
+                await safeUpdate(data => {
+                    const tr = data.tradeRoom;
+                    if (side === 'A') tr.offerA = tr.offerA.filter(id => id !== pid);
+                    if (side === 'B') tr.offerB = tr.offerB.filter(id => id !== pid);
+                    tr.readyA = false; tr.readyB = false;
+                });
+            } catch(e) {}
+        };
+
+        window.setTradeMoney = async function(side) {
+            const inputEl = document.getElementById(`trade-money-${side}`);
+            if (!inputEl) return;
+            const amount = parseFloat(inputEl.value) || 0;
+            try {
+                await safeUpdate(data => {
+                    const tr = data.tradeRoom;
+                    const myClubId = side === 'A' ? tr.clubA : tr.clubB;
+                    const myClub = data.clubs[myClubId];
+                    if (amount > myClub.purse) throw "Insufficient funds for this offer!";
+                    if (amount < 0) throw "Amount cannot be negative.";
+                    if (side === 'A') tr.moneyA = amount;
+                    if (side === 'B') tr.moneyB = amount;
+                    tr.readyA = false; tr.readyB = false;
+                });
+                inputEl.value = ''; 
+            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error setting money.", "error"); }
+        };
+
+        window.toggleTradeReady = async function(side) {
+            if (isProcessingTrade) return;
+            isProcessingTrade = true;
+            try {
+                await safeUpdate(data => {
+                    const tr = data.tradeRoom;
+                    if (side === 'A') tr.readyA = !tr.readyA;
+                    if (side === 'B') tr.readyB = !tr.readyB;
+
+                    if (tr.readyA && tr.readyB) {
+                        const clubA = data.clubs[tr.clubA];
+                        const clubB = data.clubs[tr.clubB];
+                        const mA = tr.moneyA || 0; const mB = tr.moneyB || 0;
+
+                        if (clubA.purse < mA) throw `${clubA.name} lacks sufficient 🪙 to complete this trade! Cancel ready to fix.`;
+                        if (clubB.purse < mB) throw `${clubB.name} lacks sufficient 🪙 to complete this trade! Cancel ready to fix.`;
+
+                        const aGains = tr.offerB.length; const aLoses = tr.offerA.length;
+                        const bGains = tr.offerA.length; const bLoses = tr.offerB.length;
+
+                        if (clubA.slots - aLoses + aGains > clubA.maxSlots) throw `${clubA.name} exceeds max slots! Cancel ready to fix.`;
+                        if (clubB.slots - bLoses + bGains > clubB.maxSlots) throw `${clubB.name} exceeds max slots! Cancel ready to fix.`;
+
+                        tr.offerA.forEach(id => { const p = data.players.find(x => x.id === id); if(p) p.owner = tr.clubB; });
+                        tr.offerB.forEach(id => { const p = data.players.find(x => x.id === id); if(p) p.owner = tr.clubA; });
+
+                        clubA.purse = clubA.purse - mA + mB;
+                        clubB.purse = clubB.purse - mB + mA;
+                        clubA.slots = clubA.slots - aLoses + aGains;
+                        clubB.slots = clubB.slots - bLoses + bGains;
+
+                        let logMsg = `TRADE SUCCESS: ${clubA.name} & ${clubB.name} completed a direct asset swap!`;
+                        if (mA > 0 || mB > 0) {
+                            if (mA > mB) logMsg = `TRADE SUCCESS: ${clubA.name} & ${clubB.name} swapped assets. ${clubA.name} paid a net difference of ${(mA - mB).toFixed(1)} 🪙.`;
+                            if (mB > mA) logMsg = `TRADE SUCCESS: ${clubA.name} & ${clubB.name} swapped assets. ${clubB.name} paid a net difference of ${(mB - mA).toFixed(1)} 🪙.`;
+                        }
+
+                        data.auctionLogs = data.auctionLogs || [];
+                        data.auctionLogs.unshift({ time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}), msg: logMsg, type: 'success' });
+                        data.tradeRoom = { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false };
+                    }
+                });
+            } catch(e) { window.showToast(typeof e === 'string' ? e : "Error locking trade.", "error"); }
+            isProcessingTrade = false;
+        };
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateNavAuth();
+            initMultiplayer();
+        });
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => document.getElementById('mobile-menu').classList.toggle('hidden'));
+    </script>
+</body>
+</html>

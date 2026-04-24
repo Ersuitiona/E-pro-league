@@ -4,8 +4,8 @@ const mysql = require('mysql2/promise');
 
 const app = express();
 
-// ⚠️ PASTE YOUR LIVE FRONTEND RENDER URL HERE (No trailing slash!):
-const FRONTEND_URL = 'https://REPLACE-THIS-WITH-YOUR-FRONTEND-URL.onrender.com';
+// ✅ EXACT FRONTEND URL SET HERE (No trailing slash!):
+const FRONTEND_URL = 'https://front-end-e-league-1.onrender.com';
 
 // Middleware (The VIP List for your Frontend)
 app.use(cors({

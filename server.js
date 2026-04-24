@@ -4,15 +4,22 @@ const mysql = require('mysql2/promise');
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// ⚠️ PASTE YOUR LIVE FRONTEND RENDER URL HERE (No trailing slash!):
+const FRONTEND_URL = 'https://REPLACE-THIS-WITH-YOUR-FRONTEND-URL.onrender.com';
+
+// Middleware (The VIP List for your Frontend)
+app.use(cors({
+    origin: FRONTEND_URL,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 
 // MySQL Connection Pool using your credentials
 const pool = mysql.createPool({
     host: 'sql12.freesqldatabase.com',
     user: 'sql12824242',
-    password: 'e7NmI2FJDx',
+    password: process.env.DB_PASSWORD, // 🔒 HIDDEN PASSWORD VARIABLE!
     database: 'sql12824242',
     port: 3306,
     waitForConnections: true,
@@ -74,6 +81,6 @@ app.post('/api/state', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`Waiting for frontend connections...`);
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`Waiting for frontend connections from ${FRONTEND_URL}...`);
 });

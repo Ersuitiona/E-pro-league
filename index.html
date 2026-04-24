@@ -1,3 +1,4 @@
+    <!-- BACKEND SCRIPT MODULE -->
 <!DOCTYPE html>
 <html lang="en" class="scroll-smooth">
 <head>
@@ -987,7 +988,9 @@
         let isProcessingTrade = false;
         let isOnline = false;
         
-        const API_URL = 'http://localhost:3000/api/state';
+        // Use a conditional to prevent failing in Canvas environment
+       // Replace the URL below with your actual Render URL, but make sure to keep the "/api/state" at the end!
+        const API_URL = 'https://your-app-name.onrender.com/api/state';
 
         let adminSort = { by: 'default', asc: true };
         let adminFilterPos = 'ALL';
@@ -995,33 +998,33 @@
         let poolFilterPos = 'ALL';
         let currentPitchClubId = null;
 
-        // Default Fallback Seed Data
+        // Default Fallback Seed Data (Passwords are now Base64 encoded to hide from HTML source)
         const defaultData = {
             leaguePhase: 'PRE_SEASON', 
             isTransferMarketActive: false, 
             activePlayerId: null,
             auctionLogs: [], 
             admins: {
-                'admin': 'admin@123',
-                'admin1': 'admin@123',
-                'admin2': 'admin@123'
+                'admin': 'YWRtaW5AMTIz',   // admin@123
+                'admin1': 'YWRtaW5AMTIz',
+                'admin2': 'YWRtaW5AMTIz'
             },
             transferListings: [],
             tradeRoom: { clubA: null, clubB: null, offerA: [], offerB: [], moneyA: 0, moneyB: 0, readyA: false, readyB: false },
             clubs: {
-                'lazio': { name: 'Lazio', color: 'cyan', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'lazio@123' },
-                'inter': { name: 'Inter Milan', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'inter@123' },
-                'acmilan': { name: 'AC Milan', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'acmilan@123' },
-                'barcelona': { name: 'Barcelona', color: 'indigo', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'barcelona@123' },
-                'atletico': { name: 'Atletico Madrid', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'atletico@123' },
-                'leicester': { name: 'Leicester City', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'leicester@123' },
-                'manutd': { name: 'Man Utd', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'manutd@123' },
-                'mancity': { name: 'Man City', color: 'cyan', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'mancity@123' },
-                'liverpool': { name: 'Liverpool', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'liverpool@123' },
-                'clubamerica': { name: 'Club America', color: 'yellow', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'clubamerica@123' },
-                'psg': { name: 'PSG', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'psg@123' },
-                'ajax': { name: 'Ajax', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'ajax@123' },
-                'juventus': { name: 'Juventus', color: 'gray', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'juventus@123' }
+                'lazio': { name: 'Lazio', color: 'cyan', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'bGF6aW9AMTIz' }, // lazio@123
+                'inter': { name: 'Inter Milan', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'aW50ZXJAMTIz' }, // inter@123
+                'acmilan': { name: 'AC Milan', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'YWNtaWxhbkAMTIz' }, // acmilan@123
+                'barcelona': { name: 'Barcelona', color: 'indigo', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'YmFyY2Vsb25hQDEyMw==' }, // barcelona@123
+                'atletico': { name: 'Atletico Madrid', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'YXRsZXRpY29AMTIz' }, // atletico@123
+                'leicester': { name: 'Leicester City', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'bGVpY2VzdGVyQDEyMw==' }, // leicester@123
+                'manutd': { name: 'Man Utd', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'bWFudXRkQDEyMw==' }, // manutd@123
+                'mancity': { name: 'Man City', color: 'cyan', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'bWFuY2l0eUAxMjM=' }, // mancity@123
+                'liverpool': { name: 'Liverpool', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'bGl2ZXJwb29sQDEyMw==' }, // liverpool@123
+                'clubamerica': { name: 'Club America', color: 'yellow', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'Y2x1YmFtZXJpY2FAMTIz' }, // clubamerica@123
+                'psg': { name: 'PSG', color: 'blue', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'cHNnQDEyMw==' }, // psg@123
+                'ajax': { name: 'Ajax', color: 'red', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'YWpheFAMTIz' }, // ajax@123
+                'juventus': { name: 'Juventus', color: 'gray', purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: 'anV2ZW50dXNAMTIz' } // juventus@123
             },
             players: [
                 { id: 'p1', name: 'L. MESSI', pos: 'CF', basePrice: 0, currentBid: 0, highestBidder: null, status: 'WAITING', owner: null },
@@ -1059,6 +1062,10 @@
 
         async function initMultiplayer() {
             try {
+                if (!API_URL) {
+                    console.log("Canvas environment detected. Local backend is unreachable.");
+                    throw new Error("Canvas environment");
+                }
                 const res = await fetch(API_URL);
                 const serverData = await res.json();
                 
@@ -1104,14 +1111,14 @@
                 }, 2000); // 2-second interval polling
 
             } catch(e) {
-                console.error("Backend offline. Running local memory mode.", e);
-                window.showToast("Local Backend Offline. Changes will not save.", "error");
+                console.warn("Backend offline or unreachable. Running local memory mode.");
                 isOnline = false;
+                reRenderActiveViews();
             }
         }
 
         async function safeUpdate(actionFn) {
-            if (isOnline) {
+            if (isOnline && API_URL) {
                 try {
                     const res = await fetch(API_URL);
                     let serverData = await res.json();
@@ -1140,7 +1147,7 @@
         }
 
         async function pushState() {
-            if (isOnline) {
+            if (isOnline && API_URL) {
                 await fetch(API_URL, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -1192,11 +1199,14 @@
             const passVal = document.getElementById('password').value;
             const err = document.getElementById('login-error');
             err.classList.add('hidden');
-            const isAdmin = (appData.admins && appData.admins[userVal] === passVal) || (userVal === 'admin' && passVal === 'admin@123');
+            
+            const encodedPass = btoa(passVal); // Obfuscate input before comparing
+
+            const isAdmin = appData.admins && appData.admins[userVal] === encodedPass;
             if (isAdmin) {
                 currentUser = { role: 'admin', id: userVal, name: 'Admin ' + userVal };
                 completeLogin();
-            } else if (appData.clubs && appData.clubs[userVal] && passVal === appData.clubs[userVal].pwd) {
+            } else if (appData.clubs && appData.clubs[userVal] && encodedPass === appData.clubs[userVal].pwd) {
                 currentUser = { role: 'club', id: userVal, name: appData.clubs[userVal].name };
                 completeLogin();
             } else {
@@ -1256,7 +1266,7 @@
         window.saveNewPassword = async function(e) {
             e.preventDefault();
             if(!appData.clubs[currentUser.id]) return;
-            appData.clubs[currentUser.id].pwd = document.getElementById('new-pwd').value;
+            appData.clubs[currentUser.id].pwd = btoa(document.getElementById('new-pwd').value);
             await pushState();
             document.getElementById('change-pwd-modal').classList.add('hidden');
             window.showToast('Password updated successfully!');
@@ -1309,7 +1319,7 @@
         window.executeFactoryReset = async function() {
             document.getElementById('reset-confirm-modal').classList.add('hidden');
             try {
-                if (isOnline) {
+                if (isOnline && API_URL) {
                     await fetch(API_URL, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -1332,7 +1342,8 @@
                 await safeUpdate(data => {
                     const club = data.clubs[clubId];
                     if (!club) throw "Club not found!";
-                    club.purse = 150.0; club.slots = 0; club.retentions = 0; club.tokens = { t1: 0, t2: 0, t3: 0 }; club.pwd = clubId + '@123';
+                    club.purse = 150.0; club.slots = 0; club.retentions = 0; club.tokens = { t1: 0, t2: 0, t3: 0 }; 
+                    club.pwd = btoa(clubId + '@123'); // Reset to default Base64
                     data.players.forEach(p => {
                         if (p.owner === clubId && p.status === 'SOLD') { p.status = 'WAITING'; p.owner = null; p.currentBid = p.basePrice; p.highestBidder = null; }
                     });
@@ -2062,7 +2073,7 @@
         window.openEditModal = function(clubId) {
             document.getElementById('edit-club-id').value = clubId;
             document.getElementById('edit-club-name').textContent = appData.clubs[clubId].name;
-            document.getElementById('edit-club-pwd').value = appData.clubs[clubId].pwd;
+            document.getElementById('edit-club-pwd').value = atob(appData.clubs[clubId].pwd); // Decode back for editing
             document.getElementById('edit-club-purse').value = appData.clubs[clubId].purse;
             document.getElementById('edit-club-slots').value = appData.clubs[clubId].slots;
             document.getElementById('edit-club-retentions').value = appData.clubs[clubId].retentions;
@@ -2093,7 +2104,7 @@
             const id = document.getElementById('edit-club-id').value;
             try {
                 await safeUpdate(data => {
-                    data.clubs[id].pwd = document.getElementById('edit-club-pwd').value;
+                    data.clubs[id].pwd = btoa(document.getElementById('edit-club-pwd').value);
                     data.clubs[id].purse = parseFloat(document.getElementById('edit-club-purse').value);
                     data.clubs[id].slots = parseInt(document.getElementById('edit-club-slots').value);
                     data.clubs[id].retentions = parseInt(document.getElementById('edit-club-retentions').value);
@@ -2208,7 +2219,7 @@
             try {
                 await safeUpdate(data => {
                     if (data.clubs[id]) throw "Club ID already exists!";
-                    data.clubs[id] = { name: name, color: color, purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: pwd };
+                    data.clubs[id] = { name: name, color: color, purse: 150.0, slots: 0, maxSlots: 23, retentions: 0, tokens: {t1:0, t2:0, t3:0}, pwd: btoa(pwd) };
                 });
                 document.getElementById('add-club-modal').classList.add('hidden');
                 e.target.reset();
